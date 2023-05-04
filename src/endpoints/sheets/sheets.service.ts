@@ -32,6 +32,9 @@ export class SheetsService {
       }
     });
 
+    if(!data)
+      return {message: 'sheet not found'}
+
     const totalAccountsPayable = sumProp(data.accountsPayable, 'value')
     const totalAccountsReceivable = sumProp(data.accountsReceivable, 'value')
     const balance = parseFloat((totalAccountsReceivable - totalAccountsPayable).toFixed(2));

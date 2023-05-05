@@ -1,5 +1,10 @@
 
-import { PartialType } from '@nestjs/swagger';
-import { CreateAccountsPayableDto } from './create-accounts-payable.dto';
+import { ApiProperty } from '@nestjs/swagger';
 
-export class UpdateAccountsPayableDto extends PartialType(CreateAccountsPayableDto) {}
+export class UpdateAccountsPayableDto {
+    @ApiProperty({ type: 'string', description: 'Descrição da conta a receber.' })
+    description: string;
+
+    @ApiProperty({ type: 'number', description: 'Valor da conta a receber.' })
+    value: number;
+}

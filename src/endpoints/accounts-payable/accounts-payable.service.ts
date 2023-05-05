@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { CreateAccountsPayableDto } from './dto/create-accounts-payable.dto';
 import { UpdateAccountsPayableDto } from './dto/update-accounts-payable.dto';
 import { PrismaClient } from '@prisma/client';
@@ -6,7 +6,20 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 @Injectable()
 export class AccountsPayableService {
-  create(createAccountsPayableDto: CreateAccountsPayableDto) {
+
+  async create(createAccountsPayableDto: CreateAccountsPayableDto) {
+    const sheet = await prisma.sheets.findUnique({ where: { id: createAccountsPayableDto.sheetId } });
+    
+    if (!sheet) {
+      throw new HttpException(`not found sheetId: ${createAccountsPayableDto.sheetId}`, HttpStatus.NOT_FOUND);
+    }
+
+    const user = await prisma.users.findUnique({ where: { id: createAccountsPayableDto.creatorUserId } });
+    
+    if (!user) {
+      throw new HttpException(`not found userId: ${createAccountsPayableDto.creatorUserId}`, HttpStatus.NOT_FOUND);
+    }
+
     return prisma.accountsPayable.create({
       data: {
         ...createAccountsPayableDto,
@@ -41,8 +54,8 @@ export class AccountsPayableService {
     });
   }
 
-  findOne(id: number) {
-    return prisma.accountsPayable.findUnique({
+  async findOne(id: number) {
+    const accountPayable = await prisma.accountsPayable.findUnique({
       where: {
         id
       },
@@ -67,9 +80,25 @@ export class AccountsPayableService {
         }
       }
     });;
+
+    if (!accountPayable) {
+      throw new HttpException(`not found accountPayableId: ${id}`, HttpStatus.NOT_FOUND);
+    }
+
+    return accountPayable;
   }
 
-  update(id: number, updateAccountsPayableDto: UpdateAccountsPayableDto) {
+  async update(id: number, updateAccountsPayableDto: UpdateAccountsPayableDto) {
+    const accountPayable = await prisma.accountsPayable.findUnique({
+      where: {
+        id
+      },
+    });;
+
+    if (!accountPayable) {
+      throw new HttpException(`not found accountPayableId: ${id}`, HttpStatus.NOT_FOUND);
+    }
+
     return prisma.accountsPayable.update({
       where: {
         id
@@ -81,7 +110,17 @@ export class AccountsPayableService {
     });
   }
 
-  remove(id: number) {
+  async remove(id: number) {
+    const accountPayable = await prisma.accountsPayable.findUnique({
+      where: {
+        id
+      },
+    });;
+
+    if (!accountPayable) {
+      throw new HttpException(`not found accountPayableId: ${id}`, HttpStatus.NOT_FOUND);
+    }
+
     return prisma.accountsPayable.delete({
       where: {
         id

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { CreateSheetDto } from './dto/create-sheet.dto';
 import { UpdateSheetDto } from './dto/update-sheet.dto';
 import { PrismaClient } from '@prisma/client';
@@ -22,7 +22,7 @@ export class SheetsService {
   }
 
   async findOne(id: number) {
-    const data = await prisma.sheets.findUnique({
+    const sheet = await prisma.sheets.findUnique({
       where: {
         id
       },
@@ -31,23 +31,28 @@ export class SheetsService {
         accountsReceivable: true
       }
     });
+    
+    if (!sheet) {
+      throw new HttpException(`not found sheetId: ${id}`, HttpStatus.NOT_FOUND);
+    }
 
-    if(!data)
-      return {message: 'sheet not found'}
-
-    const totalAccountsPayable = sumProp(data.accountsPayable, 'value')
-    const totalAccountsReceivable = sumProp(data.accountsReceivable, 'value')
+    const totalAccountsPayable = sumProp(sheet.accountsPayable, 'value')
+    const totalAccountsReceivable = sumProp(sheet.accountsReceivable, 'value')
     const balance = parseFloat((totalAccountsReceivable - totalAccountsPayable).toFixed(2));
 
     return {
-      ...data,
+      ...sheet,
       totalAccountsPayable,
       totalAccountsReceivable,
       balance
     }
   }
 
-  update(id: number, updateSheetDto: UpdateSheetDto) {
+  async update(id: number, updateSheetDto: UpdateSheetDto) {
+    const sheet = await prisma.sheets.findUnique({ where: { id } });
+    if (!sheet) {
+      throw new HttpException(`not found sheetId: ${id}`, HttpStatus.NOT_FOUND);
+    }
     return prisma.sheets.update({
       where: {
         id
@@ -59,7 +64,11 @@ export class SheetsService {
     })
   }
 
-  remove(id: number) {
+  async remove(id: number) {
+    const sheet = await prisma.sheets.findUnique({ where: { id } });
+    if (!sheet) {
+      throw new HttpException(`not found sheetId: ${id}`, HttpStatus.NOT_FOUND);
+    }
     return prisma.sheets.delete({
       where: {
         id

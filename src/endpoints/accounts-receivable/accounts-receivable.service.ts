@@ -1,7 +1,8 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { CreateAccountsReceivableDto } from './dto/create-accounts-receivable.dto';
 import { UpdateAccountsReceivableDto } from './dto/update-accounts-receivable.dto';
 import { PrismaClient } from '@prisma/client';
+import { NotFoundError } from 'src/common/errors/types/NotFoundError';
 
 const prisma = new PrismaClient();
 @Injectable()
@@ -10,13 +11,13 @@ export class AccountsReceivableService {
     const sheet = await prisma.sheets.findUnique({ where: { id: createAccountsReceivableDto.sheetId } });
 
     if (!sheet) {
-      throw new HttpException(`not found sheetId: ${createAccountsReceivableDto.sheetId}`, HttpStatus.NOT_FOUND);
+      throw new NotFoundError(`not found sheetId: ${createAccountsReceivableDto.sheetId}`);
     }
 
     const user = await prisma.users.findUnique({ where: { id: createAccountsReceivableDto.creatorUserId } });
-    
+
     if (!user) {
-      throw new HttpException(`not found userId: ${createAccountsReceivableDto.creatorUserId}`, HttpStatus.NOT_FOUND);
+      throw new NotFoundError(`not found userId: ${createAccountsReceivableDto.creatorUserId}`);
     }
 
     return prisma.accountsReceivable.create({
@@ -83,7 +84,7 @@ export class AccountsReceivableService {
     });;
 
     if (!accountReceivable) {
-      throw new HttpException(`not found accountReceivableId: ${id}`, HttpStatus.NOT_FOUND);
+      throw new NotFoundError(`not found accountReceivableId: ${id}`);
     }
 
     return accountReceivable;
@@ -97,7 +98,7 @@ export class AccountsReceivableService {
     });;
 
     if (!accountReceivable) {
-      throw new HttpException(`not found accountReceivableId: ${id}`, HttpStatus.NOT_FOUND);
+      throw new NotFoundError(`not found accountReceivableId: ${id}`);
     }
 
     return prisma.accountsReceivable.update({
@@ -119,7 +120,7 @@ export class AccountsReceivableService {
     });;
 
     if (!accountReceivable) {
-      throw new HttpException(`not found accountReceivableId: ${id}`, HttpStatus.NOT_FOUND);
+      throw new NotFoundError(`not found accountReceivableId: ${id}`);
     }
 
     return prisma.accountsReceivable.delete({

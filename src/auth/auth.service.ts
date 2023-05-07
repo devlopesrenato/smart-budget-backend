@@ -48,7 +48,7 @@ import { JwtPayload } from './interfaces/jwt-payload.interface';
     private jwtExtractor(request: Request): string {
       const authHeader = request.headers.authorization;
       if (!authHeader) {
-        throw new BadRequestException('Bad request.');
+        throw new BadRequestException('Token not sent.');
       }
       const [, token] = authHeader.split(' ');
   

@@ -1,8 +1,9 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { CreateSheetDto } from './dto/create-sheet.dto';
 import { UpdateSheetDto } from './dto/update-sheet.dto';
 import { PrismaClient } from '@prisma/client';
 import sumProp from '../../utils/sumProp'
+import { NotFoundError } from 'src/common/errors/types/NotFoundError';
 
 const prisma = new PrismaClient();
 @Injectable()
@@ -31,9 +32,9 @@ export class SheetsService {
         accountsReceivable: true
       }
     });
-    
+
     if (!sheet) {
-      throw new HttpException(`not found sheetId: ${id}`, HttpStatus.NOT_FOUND);
+      throw new NotFoundError(`not found sheetId: ${id}`);
     }
 
     const totalAccountsPayable = sumProp(sheet.accountsPayable, 'value')
@@ -51,7 +52,7 @@ export class SheetsService {
   async update(id: number, updateSheetDto: UpdateSheetDto) {
     const sheet = await prisma.sheets.findUnique({ where: { id } });
     if (!sheet) {
-      throw new HttpException(`not found sheetId: ${id}`, HttpStatus.NOT_FOUND);
+      throw new NotFoundError(`not found sheetId: ${id}`);
     }
     return prisma.sheets.update({
       where: {
@@ -67,7 +68,7 @@ export class SheetsService {
   async remove(id: number) {
     const sheet = await prisma.sheets.findUnique({ where: { id } });
     if (!sheet) {
-      throw new HttpException(`not found sheetId: ${id}`, HttpStatus.NOT_FOUND);
+      throw new NotFoundError(`not found sheetId: ${id}`);
     }
     return prisma.sheets.delete({
       where: {

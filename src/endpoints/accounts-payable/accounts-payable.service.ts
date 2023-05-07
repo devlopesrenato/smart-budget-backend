@@ -2,6 +2,7 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { CreateAccountsPayableDto } from './dto/create-accounts-payable.dto';
 import { UpdateAccountsPayableDto } from './dto/update-accounts-payable.dto';
 import { PrismaClient } from '@prisma/client';
+import { NotFoundError } from 'src/common/errors/types/NotFoundError';
 
 const prisma = new PrismaClient();
 @Injectable()
@@ -9,15 +10,15 @@ export class AccountsPayableService {
 
   async create(createAccountsPayableDto: CreateAccountsPayableDto) {
     const sheet = await prisma.sheets.findUnique({ where: { id: createAccountsPayableDto.sheetId } });
-    
+
     if (!sheet) {
-      throw new HttpException(`not found sheetId: ${createAccountsPayableDto.sheetId}`, HttpStatus.NOT_FOUND);
+      throw new NotFoundError(`not found sheetId: ${createAccountsPayableDto.sheetId}`);
     }
 
     const user = await prisma.users.findUnique({ where: { id: createAccountsPayableDto.creatorUserId } });
-    
+
     if (!user) {
-      throw new HttpException(`not found userId: ${createAccountsPayableDto.creatorUserId}`, HttpStatus.NOT_FOUND);
+      throw new NotFoundError(`not found userId: ${createAccountsPayableDto.creatorUserId}`);
     }
 
     return prisma.accountsPayable.create({
@@ -82,7 +83,7 @@ export class AccountsPayableService {
     });;
 
     if (!accountPayable) {
-      throw new HttpException(`not found accountPayableId: ${id}`, HttpStatus.NOT_FOUND);
+      throw new NotFoundError(`not found accountPayableId: ${id}`);
     }
 
     return accountPayable;
@@ -96,7 +97,7 @@ export class AccountsPayableService {
     });;
 
     if (!accountPayable) {
-      throw new HttpException(`not found accountPayableId: ${id}`, HttpStatus.NOT_FOUND);
+      throw new NotFoundError(`not found accountPayableId: ${id}`);
     }
 
     return prisma.accountsPayable.update({
@@ -118,7 +119,7 @@ export class AccountsPayableService {
     });;
 
     if (!accountPayable) {
-      throw new HttpException(`not found accountPayableId: ${id}`, HttpStatus.NOT_FOUND);
+      throw new NotFoundError(`not found accountPayableId: ${id}`);
     }
 
     return prisma.accountsPayable.delete({

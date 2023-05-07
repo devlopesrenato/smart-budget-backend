@@ -34,20 +34,21 @@ services:
     networks:
       - budget_network
 
-  app_budget:
+  app_budgets:
     build: .
-    container_name: app_budget
+    container_name: app_budgets
     restart: always
     tty: true
     ports: 
       - 3000:3000
     volumes:
       - ${PWD}/.env:/app/.env
+      - .:/home/node/app
     depends_on:
       - postgresdb
     environment:
       - DATABASE_URL=${DATABASE_URL}
-    command: sh -c "npm install && npx prisma migrate deploy && npx prisma generate --schema=./prisma/schema.prisma && npm run build && npm run start:prod"
+    command: sh -c "npm install && npx prisma migrate deploy && npx prisma generate --schema=./prisma/schema.prisma && npm run build && npm run start:dev"
     networks:
       - budget_network
 

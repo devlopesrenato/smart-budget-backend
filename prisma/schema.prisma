@@ -6,8 +6,8 @@ generator client {
 }
 
 datasource db {
-  provider          = "postgresql"
-  url               = env("DATABASE_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model AccountsPayable {
@@ -44,7 +44,7 @@ model AccountsReceivable {
 
 model Sheets {
   id                 Int                  @id @default(autoincrement())
-  description        String
+  description        String               @unique
   createdAt          DateTime
   updatedAt          DateTime
   accountsPayable    AccountsPayable[]

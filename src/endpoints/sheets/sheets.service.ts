@@ -1,13 +1,23 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { CreateSheetDto } from './dto/create-sheet.dto';
 import { UpdateSheetDto } from './dto/update-sheet.dto';
 import { PrismaClient } from '@prisma/client';
 import sumProp from '../../utils/sumProp'
+import { NotFoundError } from 'src/common/errors/types/NotFoundError';
+import { ConflictError } from 'src/common/errors/types/ConflictError';
 
 const prisma = new PrismaClient();
 @Injectable()
 export class SheetsService {
-  create(createSheetDto: CreateSheetDto) {
+  async create(createSheetDto: CreateSheetDto) {
+    const sheet = await prisma.sheets.findUnique({
+      where: {
+        description: createSheetDto.description
+      }
+    });
+    if (sheet) {
+      throw new ConflictError(`this sheet already exists: ${createSheetDto.description}`);
+    }
     return prisma.sheets.create({
       data: {
         ...createSheetDto,
@@ -24,16 +34,16 @@ export class SheetsService {
   async findOne(id: number) {
     const sheet = await prisma.sheets.findUnique({
       where: {
-        id
+        id,
       },
       include: {
         accountsPayable: true,
         accountsReceivable: true
       }
     });
-    
+
     if (!sheet) {
-      throw new HttpException(`not found sheetId: ${id}`, HttpStatus.NOT_FOUND);
+      throw new NotFoundError(`not found sheetId: ${id}`);
     }
 
     const totalAccountsPayable = sumProp(sheet.accountsPayable, 'value')
@@ -51,7 +61,7 @@ export class SheetsService {
   async update(id: number, updateSheetDto: UpdateSheetDto) {
     const sheet = await prisma.sheets.findUnique({ where: { id } });
     if (!sheet) {
-      throw new HttpException(`not found sheetId: ${id}`, HttpStatus.NOT_FOUND);
+      throw new NotFoundError(`not found sheetId: ${id}`);
     }
     return prisma.sheets.update({
       where: {
@@ -67,7 +77,7 @@ export class SheetsService {
   async remove(id: number) {
     const sheet = await prisma.sheets.findUnique({ where: { id } });
     if (!sheet) {
-      throw new HttpException(`not found sheetId: ${id}`, HttpStatus.NOT_FOUND);
+      throw new NotFoundError(`not found sheetId: ${id}`);
     }
     return prisma.sheets.delete({
       where: {

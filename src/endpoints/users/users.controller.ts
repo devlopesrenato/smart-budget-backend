@@ -2,12 +2,13 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@n
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { ApiTags, ApiOperation, ApiResponse, ApiBadRequestResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBadRequestResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { SigninDto } from './dto/signin.dto';
 import { AuthGuard } from '@nestjs/passport';
 
 @ApiTags('Usuários')
 @Controller('users')
+@ApiBearerAuth()
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
@@ -56,6 +57,9 @@ export class UsersController {
   }
 
   @Post('signin')  
+  @ApiOperation({ summary: 'Login do usuário', description: 'Retorna os dados do usuário e um token de acesso..'})
+  @ApiResponse({ status: 200, description: 'Login com sucesso.' })
+  @ApiBadRequestResponse({ description: 'Requisição inválida. Verifique se o ID fornecido é válido.'})  
   public async signin(
     @Body() signinDto: SigninDto,
   ): Promise<{ name: string; jwtToken: string; email: string }> {

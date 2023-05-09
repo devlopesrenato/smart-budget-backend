@@ -5,10 +5,16 @@ import { PrismaClient } from '@prisma/client';
 import sumProp from '../../utils/sumProp'
 import { NotFoundError } from 'src/common/errors/types/NotFoundError';
 import { ConflictError } from 'src/common/errors/types/ConflictError';
+import { BadRequestError } from 'src/common/errors/types/BadRequestError';
+import { Utils } from 'src/utils';
 
 const prisma = new PrismaClient();
 @Injectable()
 export class SheetsService {
+  constructor(
+    private readonly utils: Utils
+  ) { }
+  
   async create(createSheetDto: CreateSheetDto) {
     const sheet = await prisma.sheets.findUnique({
       where: {
@@ -32,6 +38,9 @@ export class SheetsService {
   }
 
   async findOne(id: number) {
+    if (!this.utils.isNotNumber(String(id))) {
+      throw new BadRequestError('invalid id')
+    }
     const sheet = await prisma.sheets.findUnique({
       where: {
         id,
@@ -59,6 +68,9 @@ export class SheetsService {
   }
 
   async update(id: number, updateSheetDto: UpdateSheetDto) {
+    if (!this.utils.isNotNumber(String(id))) {
+      throw new BadRequestError('invalid id')
+    }
     const sheet = await prisma.sheets.findUnique({ where: { id } });
     if (!sheet) {
       throw new NotFoundError(`not found sheetId: ${id}`);
@@ -75,6 +87,9 @@ export class SheetsService {
   }
 
   async remove(id: number) {
+    if (!this.utils.isNotNumber(String(id))) {
+      throw new BadRequestError('invalid id')
+    }
     const sheet = await prisma.sheets.findUnique({ where: { id } });
     if (!sheet) {
       throw new NotFoundError(`not found sheetId: ${id}`);

@@ -3,10 +3,16 @@ import { CreateAccountsReceivableDto } from './dto/create-accounts-receivable.dt
 import { UpdateAccountsReceivableDto } from './dto/update-accounts-receivable.dto';
 import { PrismaClient } from '@prisma/client';
 import { NotFoundError } from 'src/common/errors/types/NotFoundError';
+import { BadRequestError } from 'src/common/errors/types/BadRequestError';
+import { Utils } from 'src/utils';
 
 const prisma = new PrismaClient();
 @Injectable()
 export class AccountsReceivableService {
+  constructor(
+    private readonly utils: Utils
+  ) { }
+  
   async create(createAccountsReceivableDto: CreateAccountsReceivableDto) {
     const sheet = await prisma.sheets.findUnique({ where: { id: createAccountsReceivableDto.sheetId } });
 
@@ -57,6 +63,9 @@ export class AccountsReceivableService {
   }
 
   async findOne(id: number) {
+    if (!this.utils.isNotNumber(String(id))) {
+      throw new BadRequestError('invalid id')
+    }
     const accountReceivable = await prisma.accountsReceivable.findUnique({
       where: {
         id
@@ -91,6 +100,9 @@ export class AccountsReceivableService {
   }
 
   async update(id: number, updateAccountsReceivableDto: UpdateAccountsReceivableDto) {
+    if (!this.utils.isNotNumber(String(id))) {
+      throw new BadRequestError('invalid id')
+    }
     const accountReceivable = await prisma.accountsReceivable.findUnique({
       where: {
         id
@@ -113,6 +125,9 @@ export class AccountsReceivableService {
   }
 
   async remove(id: number) {
+    if (!this.utils.isNotNumber(String(id))) {
+      throw new BadRequestError('invalid id')
+    }
     const accountReceivable = await prisma.accountsReceivable.findUnique({
       where: {
         id

@@ -9,6 +9,8 @@ import { SigninDto } from './dto/signin.dto';
 import { NotFoundError } from 'src/common/errors/types/NotFoundError';
 import { UnauthorizedError } from 'src/common/errors/types/UnauthorizedError';
 import { ConflictError } from 'src/common/errors/types/ConflictError';
+import { BadRequestError } from 'src/common/errors/types/BadRequestError';
+import { Utils } from 'src/utils';
 
 const prisma = new PrismaClient();
 const saltRounds = 10;
@@ -17,7 +19,8 @@ const saltRounds = 10;
 export class UsersService {
   constructor(
     private readonly authService: AuthService,
-  ) { }
+    private readonly utils: Utils
+  ) { }  
 
   async create(createUserDto: CreateUserDto) {
     const user = await prisma.users.findUnique({ where: { email: createUserDto.email } });
@@ -41,6 +44,9 @@ export class UsersService {
   }
 
   async findOne(id: number) {
+    if (!this.utils.isNotNumber(String(id))) {
+      throw new BadRequestError('invalid id')
+    }
     const user = await prisma.users.findUnique({ where: { id } });
     if (!user) {
       throw new NotFoundError(`not found userId: ${id}`);
@@ -49,6 +55,9 @@ export class UsersService {
   }
 
   async update(id: number, updateUserDto: UpdateUserDto) {
+    if (!this.utils.isNotNumber(String(id))) {
+      throw new BadRequestError('invalid id')
+    }
     const user = await prisma.users.findUnique({ where: { id } });
     if (!user) {
       throw new NotFoundError(`not found userId: ${id}`);
@@ -77,6 +86,9 @@ export class UsersService {
   }
 
   async remove(id: number) {
+    if (!this.utils.isNotNumber(String(id))) {
+      throw new BadRequestError('invalid id')
+    }
     const user = await prisma.users.findUnique({ where: { id } });
     if (!user) {
       throw new NotFoundError(`not found userId: ${id}`);

@@ -7,7 +7,7 @@ services:
     restart: always
     tty: true
     ports:
-      - 15432:5432
+      - 5432:5432
     volumes:
       - ${PWD}/.env:/app/.env
       - ./postgres/data:/var/lib/postgresql/data    

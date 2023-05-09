@@ -4,11 +4,20 @@ import { UpdateSheetDto } from './dto/update-sheet.dto';
 import { PrismaClient } from '@prisma/client';
 import sumProp from '../../utils/sumProp'
 import { NotFoundError } from 'src/common/errors/types/NotFoundError';
+import { ConflictError } from 'src/common/errors/types/ConflictError';
 
 const prisma = new PrismaClient();
 @Injectable()
 export class SheetsService {
-  create(createSheetDto: CreateSheetDto) {
+  async create(createSheetDto: CreateSheetDto) {
+    const sheet = await prisma.sheets.findUnique({
+      where: {
+        description: createSheetDto.description
+      }
+    });
+    if (sheet) {
+      throw new ConflictError(`this sheet already exists: ${createSheetDto.description}`);
+    }
     return prisma.sheets.create({
       data: {
         ...createSheetDto,
@@ -25,7 +34,7 @@ export class SheetsService {
   async findOne(id: number) {
     const sheet = await prisma.sheets.findUnique({
       where: {
-        id
+        id,
       },
       include: {
         accountsPayable: true,

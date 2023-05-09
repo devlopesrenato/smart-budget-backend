@@ -8,6 +8,7 @@ import { AuthService } from 'src/auth/auth.service';
 import { SigninDto } from './dto/signin.dto';
 import { NotFoundError } from 'src/common/errors/types/NotFoundError';
 import { UnauthorizedError } from 'src/common/errors/types/UnauthorizedError';
+import { ConflictError } from 'src/common/errors/types/ConflictError';
 
 const prisma = new PrismaClient();
 const saltRounds = 10;
@@ -19,6 +20,10 @@ export class UsersService {
   ) { }
 
   async create(createUserDto: CreateUserDto) {
+    const user = await prisma.users.findUnique({ where: { email: createUserDto.email } });
+    if (user) {
+      throw new ConflictError(`this email already exists: ${createUserDto.email}`);
+    }
     const hashedPassword = await bcrypt.hash(createUserDto.password, saltRounds);
 
     return await prisma.users.create({
@@ -32,7 +37,7 @@ export class UsersService {
   }
 
   findAll() {
-    return 'oi'//prisma.users.findMany();
+    return prisma.users.findMany();
   }
 
   async findOne(id: number) {
@@ -48,6 +53,12 @@ export class UsersService {
     if (!user) {
       throw new NotFoundError(`not found userId: ${id}`);
     }
+
+    const userEmail = await prisma.users.findUnique({ where: { email: updateUserDto?.email } });
+    if (userEmail && userEmail?.id !== user.id) {
+      throw new ConflictError(`this email already exists: ${updateUserDto?.email}`);
+    }
+
     const hashedPassword =
       updateUserDto.password
         ? await bcrypt.hash(updateUserDto.password, saltRounds)
@@ -77,14 +88,12 @@ export class UsersService {
     });
   }
 
-  public async signin(signinDto: SigninDto): Promise<{
-    id: number;
-    name: string;
-    email: string;
-    jwtToken: string;
-  }> {
-    const user = await prisma.users.findUnique({ where: { email: signinDto.email } });
-    const match = await this.checkPassword(signinDto.password, user);
+  public async signin(signinDto: SigninDto): Promise<UserLogin> {
+    const user: UserEntity = await prisma.users.findUnique({ where: { email: signinDto.email } });
+    if (!user) {
+      throw new UnauthorizedError('Invalid Credentials');
+    }
+    const match: boolean = await this.checkPassword(signinDto.password, user);
     if (!match) {
       throw new UnauthorizedError('Invalid Credentials');
     }

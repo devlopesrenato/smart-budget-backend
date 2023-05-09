@@ -3,10 +3,15 @@ import { CreateAccountsPayableDto } from './dto/create-accounts-payable.dto';
 import { UpdateAccountsPayableDto } from './dto/update-accounts-payable.dto';
 import { PrismaClient } from '@prisma/client';
 import { NotFoundError } from 'src/common/errors/types/NotFoundError';
+import { Utils } from 'src/utils';
+import { BadRequestError } from 'src/common/errors/types/BadRequestError';
 
 const prisma = new PrismaClient();
 @Injectable()
 export class AccountsPayableService {
+  constructor(
+    private readonly utils: Utils
+  ) { }
 
   async create(createAccountsPayableDto: CreateAccountsPayableDto) {
     const sheet = await prisma.sheets.findUnique({ where: { id: createAccountsPayableDto.sheetId } });
@@ -56,6 +61,9 @@ export class AccountsPayableService {
   }
 
   async findOne(id: number) {
+    if (!this.utils.isNotNumber(String(id))) {
+      throw new BadRequestError('invalid id')
+    }
     const accountPayable = await prisma.accountsPayable.findUnique({
       where: {
         id
@@ -90,6 +98,9 @@ export class AccountsPayableService {
   }
 
   async update(id: number, updateAccountsPayableDto: UpdateAccountsPayableDto) {
+    if (!this.utils.isNotNumber(String(id))) {
+      throw new BadRequestError('invalid id')
+    }
     const accountPayable = await prisma.accountsPayable.findUnique({
       where: {
         id
@@ -112,6 +123,9 @@ export class AccountsPayableService {
   }
 
   async remove(id: number) {
+    if (!this.utils.isNotNumber(String(id))) {
+      throw new BadRequestError('invalid id')
+    }
     const accountPayable = await prisma.accountsPayable.findUnique({
       where: {
         id

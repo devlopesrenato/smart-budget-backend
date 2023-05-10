@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { CreateAccountsPayableDto } from './dto/create-accounts-payable.dto';
 import { UpdateAccountsPayableDto } from './dto/update-accounts-payable.dto';
 import { PrismaClient } from '@prisma/client';
@@ -97,7 +97,7 @@ export class AccountsPayableService {
     return accountPayable;
   }
 
-  async update(id: number, updateAccountsPayableDto: UpdateAccountsPayableDto) {
+  async update(id: number, updateAccountsPayableDto: UpdateAccountsPayableDto, userIdUpdate: string) {
     if (!this.utils.isNotNumber(String(id))) {
       throw new BadRequestError('invalid id')
     }
@@ -117,7 +117,8 @@ export class AccountsPayableService {
       },
       data: {
         ...updateAccountsPayableDto,
-        updatedAt: new Date()
+        updatedAt: new Date(),
+        updaterUserId: Number(userIdUpdate)
       }
     });
   }

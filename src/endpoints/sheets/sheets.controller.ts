@@ -3,7 +3,7 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@n
 import { SheetsService } from './sheets.service';
 import { CreateSheetDto } from './dto/create-sheet.dto';
 import { UpdateSheetDto } from './dto/update-sheet.dto';
-import { ApiTags, ApiResponse, ApiParam, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiResponse, ApiParam, ApiBody, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 
 @ApiTags('Folhas')
@@ -14,6 +14,7 @@ export class SheetsController {
   constructor(private readonly sheetsService: SheetsService) { }
 
   @Post()
+  @ApiOperation({ summary: 'Criar uma nova folha' })
   @ApiBody({ type: CreateSheetDto })
   @ApiResponse({ status: 201, description: 'Folha criada com sucesso' })
   @ApiResponse({ status: 400, description: 'Parâmetros inválidos' })
@@ -22,12 +23,14 @@ export class SheetsController {
   }
 
   @Get()
+  @ApiOperation({ summary: 'Obter uma lista de todas as folhas' })
   @ApiResponse({ status: 200, description: 'Folhas retornadas com sucesso' })
   findAll() {
     return this.sheetsService.findAll();
   }
 
   @Get(':id')
+  @ApiOperation({ summary: 'Obter uma única folha por ID' })
   @ApiParam({ name: 'id', description: 'ID da folha' })
   @ApiResponse({ status: 200, description: 'Folha retornada com sucesso' })
   @ApiResponse({ status: 404, description: 'Folha não encontrada' })
@@ -36,6 +39,7 @@ export class SheetsController {
   }
 
   @Patch(':id')
+  @ApiOperation({ summary: 'Atualizar uma folha existente por ID' })
   @ApiParam({ name: 'id', description: 'ID da folha' })
   @ApiBody({ type: UpdateSheetDto })
   @ApiResponse({ status: 200, description: 'Folha atualizada com sucesso' })
@@ -46,6 +50,7 @@ export class SheetsController {
   }
 
   @Delete(':id')
+  @ApiOperation({ summary: 'Excluir uma folha existente por ID' })
   @ApiParam({ name: 'id', description: 'ID da folha' })
   @ApiResponse({ status: 200, description: 'Folha removida com sucesso' })
   @ApiResponse({ status: 404, description: 'Folha não encontrada' })

@@ -26,13 +26,7 @@ import { JwtPayload } from './interfaces/jwt-payload.interface';
         expiresIn: expires,
       });
     }
-  
-    public async createScheduleTokenWithTime(id: string, expires: string) {
-      return sign({ id }, process.env.JWT_SECRET, {
-        expiresIn: expires,
-      });
-    }
-  
+    
     public async validateUser(jwtPayload: JwtPayload) {      
       const user = await this.prisma.users.findUnique({
         where: {

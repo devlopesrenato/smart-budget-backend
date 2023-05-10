@@ -7,6 +7,12 @@ import { Utils } from 'src/utils';
 
 @Module({
   controllers: [UsersController],
-  providers: [UsersService, AuthService, PrismaService, Utils]
+  providers: [
+    UsersService, 
+    AuthService, 
+    PrismaService, 
+    Utils    
+  ]
+
 })
 export class UsersModule {}

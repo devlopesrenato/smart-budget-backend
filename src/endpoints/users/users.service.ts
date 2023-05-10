@@ -20,7 +20,7 @@ export class UsersService {
   constructor(
     private readonly authService: AuthService,
     private readonly utils: Utils
-  ) { }  
+  ) { }
 
   async create(createUserDto: CreateUserDto) {
     const user = await prisma.users.findUnique({ where: { email: createUserDto.email } });
@@ -63,9 +63,11 @@ export class UsersService {
       throw new NotFoundError(`not found userId: ${id}`);
     }
 
-    const userEmail = await prisma.users.findUnique({ where: { email: updateUserDto?.email } });
-    if (userEmail && userEmail?.id !== user.id) {
-      throw new ConflictError(`this email already exists: ${updateUserDto?.email}`);
+    if (updateUserDto?.email) {
+      const userEmail = await prisma.users.findUnique({ where: { email: updateUserDto?.email } });
+      if (userEmail && userEmail?.id !== user.id) {
+        throw new ConflictError(`this email already exists: ${updateUserDto?.email}`);
+      }
     }
 
     const hashedPassword =

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req } from '@nestjs/common';
 import { AccountsReceivableService } from './accounts-receivable.service';
 import { CreateAccountsReceivableDto } from './dto/create-accounts-receivable.dto';
 import { UpdateAccountsReceivableDto } from './dto/update-accounts-receivable.dto';
@@ -40,8 +40,8 @@ export class AccountsReceivableController {
   @ApiResponse({ status: 200, description: 'Conta a receber atualizada com sucesso' })
   @ApiResponse({ status: 400, description: 'Parâmetros inválidos' })
   @ApiResponse({ status: 404, description: 'Conta a receber não encontrada' })
-  update(@Param('id') id: string, @Body() updateAccountsReceivableDto: UpdateAccountsReceivableDto) {
-    return this.accountsReceivableService.update(+id, updateAccountsReceivableDto);
+  update(@Param('id') id: string, @Body() updateAccountsReceivableDto: UpdateAccountsReceivableDto, @Req() req) {
+    return this.accountsReceivableService.update(+id, updateAccountsReceivableDto, req.user?.id);
   }
 
   @Delete(':id')

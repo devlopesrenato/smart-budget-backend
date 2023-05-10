@@ -99,7 +99,7 @@ export class AccountsReceivableService {
     return accountReceivable;
   }
 
-  async update(id: number, updateAccountsReceivableDto: UpdateAccountsReceivableDto) {
+  async update(id: number, updateAccountsReceivableDto: UpdateAccountsReceivableDto, userIdUpdate: string) {
     if (!this.utils.isNotNumber(String(id))) {
       throw new BadRequestError('invalid id')
     }
@@ -119,7 +119,8 @@ export class AccountsReceivableService {
       },
       data: {
         ...updateAccountsReceivableDto,
-        updatedAt: new Date()
+        updatedAt: new Date(),
+        updaterUserId: Number(userIdUpdate)
       }
     });
   }

@@ -1,14 +1,6 @@
 
-import { ApiProperty } from '@nestjs/swagger';
-import { IsNumber, IsString } from 'class-validator';
+import { PartialType } from '@nestjs/swagger';
+import { CreateAccountsReceivableDto } from './create-accounts-receivable.dto';
 
 
-export class UpdateAccountsReceivableDto {
-    @ApiProperty({ type: 'string', description: 'Descrição da conta a receber.' })
-    @IsString()
-    description: string;
-
-    @ApiProperty({ type: 'number', description: 'Valor da conta a receber.' })
-    @IsNumber()
-    value: number;
-}
+export class UpdateAccountsReceivableDto extends PartialType(CreateAccountsReceivableDto) { }

@@ -1,27 +1,31 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req } from '@nestjs/common';
 import { AccountsPayableService } from './accounts-payable.service';
 import { CreateAccountsPayableDto } from './dto/create-accounts-payable.dto';
 import { UpdateAccountsPayableDto } from './dto/update-accounts-payable.dto';
 import { ApiTags, ApiResponse, ApiOperation, ApiParam, ApiBody, ApiSecurity, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
+import { AuthService } from 'src/auth/auth.service';
 
 @Controller('accounts-payable')
 @ApiTags('Contas a pagar')
 @ApiBearerAuth()
 @UseGuards(AuthGuard('jwt'))
 export class AccountsPayableController {
-  constructor(private readonly accountsPayableService: AccountsPayableService) {}
+  constructor(
+    private readonly accountsPayableService: AccountsPayableService,
+    private readonly authService: AuthService
+  ) { }
 
   @ApiOperation({ summary: 'Criar uma nova conta a pagar' })
   @ApiBody({ type: CreateAccountsPayableDto })
-  @ApiResponse({ status: 201, description: 'A conta a pagar foi criada com sucesso.'})
+  @ApiResponse({ status: 201, description: 'A conta a pagar foi criada com sucesso.' })
   @Post()
   create(@Body() createAccountsPayableDto: CreateAccountsPayableDto) {
     return this.accountsPayableService.create(createAccountsPayableDto);
   }
 
   @ApiOperation({ summary: 'Obter uma lista de todas as contas a pagar' })
-  @ApiResponse({ status: 200, description: 'Retorna uma lista de contas a pagar.'})
+  @ApiResponse({ status: 200, description: 'Retorna uma lista de contas a pagar.' })
   @Get()
   findAll() {
     return this.accountsPayableService.findAll();
@@ -40,14 +44,15 @@ export class AccountsPayableController {
   @ApiBody({ type: UpdateAccountsPayableDto })
   @ApiResponse({ status: 200, description: 'A conta a pagar atualizada.', type: UpdateAccountsPayableDto })
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateAccountsPayableDto: UpdateAccountsPayableDto) {
-    return this.accountsPayableService.update(+id, updateAccountsPayableDto);
+  async update(@Param('id') id: string, @Body() updateAccountsPayableDto: UpdateAccountsPayableDto, @Req() req) {
+    
+    return this.accountsPayableService.update(+id, updateAccountsPayableDto, req.user?.id);
   }
 
   @ApiOperation({ summary: 'Excluir uma conta a pagar existente por ID' })
   @ApiParam({ name: 'id', description: 'O ID da conta a pagar para excluir.' })
-  @ApiResponse({ status: 200, description: 'A conta a pagar foi excluída com sucesso.'})
-  @Delete(':id')  
+  @ApiResponse({ status: 200, description: 'A conta a pagar foi excluída com sucesso.' })
+  @Delete(':id')
   remove(@Param('id') id: string) {
     return this.accountsPayableService.remove(+id);
   }

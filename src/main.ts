@@ -10,12 +10,16 @@ import { BadRequestInterceptor } from './common/errors/interceptors/badrequest.i
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
   app.useGlobalInterceptors(new ConflictInterceptor());
   app.useGlobalInterceptors(new BadRequestInterceptor());
   app.useGlobalInterceptors(new DatabaseInterceptor());
   app.useGlobalInterceptors(new UnauthorizedInterceptor());
   app.useGlobalInterceptors(new NotFoundInterceptor());
-  app.useGlobalPipes(new ValidationPipe());
+  app.useGlobalPipes(new ValidationPipe({
+    whitelist: true,
+    forbidNonWhitelisted: true,
+  }));
 
   const config = new DocumentBuilder()
     .setTitle('Orçamento Pessoal')

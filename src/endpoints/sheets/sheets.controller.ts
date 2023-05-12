@@ -3,8 +3,10 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@n
 import { SheetsService } from './sheets.service';
 import { CreateSheetDto } from './dto/create-sheet.dto';
 import { UpdateSheetDto } from './dto/update-sheet.dto';
-import { ApiTags, ApiResponse, ApiParam, ApiBody, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { ApiTags, ApiResponse, ApiParam, ApiBody, ApiBearerAuth, ApiOperation, ApiUnauthorizedResponse, ApiBadRequestResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
+import { ApiResponseGenerate } from 'src/@types/swagger/api-response-generate';
+import { SheetEntity } from './entities/sheet.entity';
 
 @ApiTags('Folhas')
 @Controller('sheets')
@@ -16,15 +18,18 @@ export class SheetsController {
   @Post()
   @ApiOperation({ summary: 'Criar uma nova folha' })
   @ApiBody({ type: CreateSheetDto })
-  @ApiResponse({ status: 201, description: 'Folha criada com sucesso' })
-  @ApiResponse({ status: 400, description: 'Parâmetros inválidos' })
+  @ApiResponse({ status: 201, description: 'Folha criada com sucesso', type: SheetEntity })
+  @ApiBadRequestResponse(ApiResponseGenerate(400, ["Token not sent.", "Bad Request"]))
+  @ApiUnauthorizedResponse(ApiResponseGenerate(401, "Unauthorized"))
   create(@Body() createSheetDto: CreateSheetDto) {
     return this.sheetsService.create(createSheetDto);
   }
 
   @Get()
   @ApiOperation({ summary: 'Obter uma lista de todas as folhas' })
-  @ApiResponse({ status: 200, description: 'Folhas retornadas com sucesso' })
+  @ApiResponse({ status: 200, description: 'Folhas retornadas com sucesso', type: [SheetEntity] })
+  @ApiBadRequestResponse(ApiResponseGenerate(400, ["Token not sent.", "Bad Request"]))
+  @ApiUnauthorizedResponse(ApiResponseGenerate(401, "Unauthorized"))
   findAll() {
     return this.sheetsService.findAll();
   }
@@ -32,8 +37,10 @@ export class SheetsController {
   @Get(':id')
   @ApiOperation({ summary: 'Obter uma única folha por ID' })
   @ApiParam({ name: 'id', description: 'ID da folha' })
-  @ApiResponse({ status: 200, description: 'Folha retornada com sucesso' })
+  @ApiResponse({ status: 200, description: 'Folha retornada com sucesso', type: SheetEntity })
   @ApiResponse({ status: 404, description: 'Folha não encontrada' })
+  @ApiBadRequestResponse(ApiResponseGenerate(400, ["Token not sent.", "invalid id", "Bad Request"]))
+  @ApiUnauthorizedResponse(ApiResponseGenerate(401, "Unauthorized"))
   findOne(@Param('id') id: string) {
     return this.sheetsService.findOne(+id);
   }
@@ -42,9 +49,10 @@ export class SheetsController {
   @ApiOperation({ summary: 'Atualizar uma folha existente por ID' })
   @ApiParam({ name: 'id', description: 'ID da folha' })
   @ApiBody({ type: UpdateSheetDto })
-  @ApiResponse({ status: 200, description: 'Folha atualizada com sucesso' })
-  @ApiResponse({ status: 400, description: 'Parâmetros inválidos' })
+  @ApiResponse({ status: 200, description: 'Folha atualizada com sucesso', type: SheetEntity })
   @ApiResponse({ status: 404, description: 'Folha não encontrada' })
+  @ApiBadRequestResponse(ApiResponseGenerate(400, ["Token not sent.", "invalid id", "Bad Request"]))
+  @ApiUnauthorizedResponse(ApiResponseGenerate(401, "Unauthorized"))
   update(@Param('id') id: string, @Body() updateSheetDto: UpdateSheetDto) {
     return this.sheetsService.update(+id, updateSheetDto);
   }
@@ -52,8 +60,10 @@ export class SheetsController {
   @Delete(':id')
   @ApiOperation({ summary: 'Excluir uma folha existente por ID' })
   @ApiParam({ name: 'id', description: 'ID da folha' })
-  @ApiResponse({ status: 200, description: 'Folha removida com sucesso' })
+  @ApiResponse({ status: 200, description: 'Folha removida com sucesso', type: SheetEntity })
   @ApiResponse({ status: 404, description: 'Folha não encontrada' })
+  @ApiBadRequestResponse(ApiResponseGenerate(400, ["Token not sent.", "invalid id", "Bad Request"]))
+  @ApiUnauthorizedResponse(ApiResponseGenerate(401, "Unauthorized"))
   remove(@Param('id') id: string) {
     return this.sheetsService.remove(+id);
   }

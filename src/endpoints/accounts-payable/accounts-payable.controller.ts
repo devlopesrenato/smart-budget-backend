@@ -2,9 +2,11 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req } fro
 import { AccountsPayableService } from './accounts-payable.service';
 import { CreateAccountsPayableDto } from './dto/create-accounts-payable.dto';
 import { UpdateAccountsPayableDto } from './dto/update-accounts-payable.dto';
-import { ApiTags, ApiResponse, ApiOperation, ApiParam, ApiBody, ApiSecurity, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiResponse, ApiOperation, ApiParam, ApiBody, ApiSecurity, ApiBearerAuth, ApiUnauthorizedResponse, ApiBadRequestResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from 'src/auth/auth.service';
+import { AccountsPayableEntity } from './entities/accounts-payable.entity';
+import { ApiResponseGenerate } from 'src/@types/swagger/api-response-generate';
 
 @Controller('accounts-payable')
 @ApiTags('Contas a pagar')
@@ -16,16 +18,20 @@ export class AccountsPayableController {
     private readonly authService: AuthService
   ) { }
 
-  @ApiOperation({ summary: 'Criar uma nova conta a pagar' })
-  @ApiBody({ type: CreateAccountsPayableDto })
-  @ApiResponse({ status: 201, description: 'A conta a pagar foi criada com sucesso.' })
   @Post()
-  create(@Body() createAccountsPayableDto: CreateAccountsPayableDto) {
-    return this.accountsPayableService.create(createAccountsPayableDto);
+  @ApiBody({ type: CreateAccountsPayableDto })
+  @ApiOperation({ summary: 'Criar uma nova conta a pagar' })
+  @ApiResponse({ status: 201, description: 'A conta a pagar foi criada com sucesso.', type: AccountsPayableEntity })
+  @ApiBadRequestResponse(ApiResponseGenerate(400, ["Token not sent.", "Bad Request"]))
+  @ApiUnauthorizedResponse(ApiResponseGenerate(401, "Unauthorized"))
+  create(@Body() createAccountsPayableDto: CreateAccountsPayableDto, @Req() req) {
+    return this.accountsPayableService.create(createAccountsPayableDto, req.user?.id);
   }
 
   @ApiOperation({ summary: 'Obter uma lista de todas as contas a pagar' })
-  @ApiResponse({ status: 200, description: 'Retorna uma lista de contas a pagar.' })
+  @ApiResponse({ status: 200, description: 'Retorna uma lista de contas a pagar.', type: [AccountsPayableEntity] })
+  @ApiBadRequestResponse(ApiResponseGenerate(400, ["Token not sent.", "Bad Request"]))
+  @ApiUnauthorizedResponse(ApiResponseGenerate(401, "Unauthorized"))
   @Get()
   findAll() {
     return this.accountsPayableService.findAll();
@@ -33,7 +39,9 @@ export class AccountsPayableController {
 
   @ApiOperation({ summary: 'Obter uma única conta a pagar por ID' })
   @ApiParam({ name: 'id', description: 'O ID da conta a pagar para recuperar.' })
-  @ApiResponse({ status: 200, description: 'A conta a pagar com o ID especificado.', type: UpdateAccountsPayableDto })
+  @ApiResponse({ status: 200, description: 'A conta a pagar com o ID especificado.', type: AccountsPayableEntity })
+  @ApiBadRequestResponse(ApiResponseGenerate(400, ["Token not sent.", "invalid id", "Bad Request"]))
+  @ApiUnauthorizedResponse(ApiResponseGenerate(401, "Unauthorized"))
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.accountsPayableService.findOne(+id);
@@ -42,16 +50,20 @@ export class AccountsPayableController {
   @ApiOperation({ summary: 'Atualizar uma conta a pagar existente por ID' })
   @ApiParam({ name: 'id', description: 'O ID da conta a pagar para atualizar.' })
   @ApiBody({ type: UpdateAccountsPayableDto })
-  @ApiResponse({ status: 200, description: 'A conta a pagar atualizada.', type: UpdateAccountsPayableDto })
+  @ApiResponse({ status: 200, description: 'A conta a pagar atualizada.', type: AccountsPayableEntity })
+  @ApiBadRequestResponse(ApiResponseGenerate(400, ["Token not sent.", "invalid id", "Bad Request"]))
+  @ApiUnauthorizedResponse(ApiResponseGenerate(401, "Unauthorized"))
   @Patch(':id')
   async update(@Param('id') id: string, @Body() updateAccountsPayableDto: UpdateAccountsPayableDto, @Req() req) {
-    
+
     return this.accountsPayableService.update(+id, updateAccountsPayableDto, req.user?.id);
   }
 
   @ApiOperation({ summary: 'Excluir uma conta a pagar existente por ID' })
   @ApiParam({ name: 'id', description: 'O ID da conta a pagar para excluir.' })
-  @ApiResponse({ status: 200, description: 'A conta a pagar foi excluída com sucesso.' })
+  @ApiResponse({ status: 200, description: 'A conta a pagar foi excluída com sucesso.', type: AccountsPayableEntity })
+  @ApiBadRequestResponse(ApiResponseGenerate(400, ["Token not sent.", "invalid id", "Bad Request"]))
+  @ApiUnauthorizedResponse(ApiResponseGenerate(401, "Unauthorized"))
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.accountsPayableService.remove(+id);

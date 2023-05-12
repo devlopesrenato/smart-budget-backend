@@ -21,7 +21,7 @@ import { JwtPayload } from './interfaces/jwt-payload.interface';
       });
     }
   
-    public async createAccessTokenWithTime(userId: string, expires: string) {
+    public async createAccessTokenWithTime(userId: number, expires: string) {
       return sign({ userId }, process.env.JWT_SECRET, {
         expiresIn: expires,
       });

@@ -13,17 +13,17 @@ export class AccountsReceivableService {
     private readonly utils: Utils
   ) { }
   
-  async create(createAccountsReceivableDto: CreateAccountsReceivableDto) {
+  async create(createAccountsReceivableDto: CreateAccountsReceivableDto, userId: number) {
     const sheet = await prisma.sheets.findUnique({ where: { id: createAccountsReceivableDto.sheetId } });
 
     if (!sheet) {
       throw new NotFoundError(`not found sheetId: ${createAccountsReceivableDto.sheetId}`);
     }
 
-    const user = await prisma.users.findUnique({ where: { id: createAccountsReceivableDto.creatorUserId } });
+    const user = await prisma.users.findUnique({ where: { id: userId } });
 
     if (!user) {
-      throw new NotFoundError(`not found userId: ${createAccountsReceivableDto.creatorUserId}`);
+      throw new NotFoundError(`user token invalid`);
     }
 
     return prisma.accountsReceivable.create({

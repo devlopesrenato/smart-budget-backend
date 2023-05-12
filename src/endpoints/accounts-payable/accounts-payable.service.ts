@@ -13,17 +13,17 @@ export class AccountsPayableService {
     private readonly utils: Utils
   ) { }
 
-  async create(createAccountsPayableDto: CreateAccountsPayableDto) {
+  async create(createAccountsPayableDto: CreateAccountsPayableDto, userId: number) {
     const sheet = await prisma.sheets.findUnique({ where: { id: createAccountsPayableDto.sheetId } });
 
     if (!sheet) {
       throw new NotFoundError(`not found sheetId: ${createAccountsPayableDto.sheetId}`);
     }
 
-    const user = await prisma.users.findUnique({ where: { id: createAccountsPayableDto.creatorUserId } });
+    const user = await prisma.users.findUnique({ where: { id: userId } });
 
     if (!user) {
-      throw new NotFoundError(`not found userId: ${createAccountsPayableDto.creatorUserId}`);
+      throw new NotFoundError(`user token invalid`);
     }
 
     return prisma.accountsPayable.create({

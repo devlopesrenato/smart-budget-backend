@@ -2,7 +2,11 @@ import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class AppService {
-  getApi(): string {
-    return 'Api Orçamento Pessoal executando com sucesso!';
+  getApi(): object {
+    const baseUrl = process.env.API_URL || 'http://localhost:3000';
+    return {
+      status: "Budget Api executando com sucesso!",
+      swagger: `${baseUrl}/api`
+    };
   }
 }

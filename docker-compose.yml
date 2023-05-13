@@ -34,9 +34,9 @@ services:
     networks:
       - budget_network
 
-  app_budgets:
+  app_budget:
     build: .
-    container_name: app_budgets
+    container_name: app_budget
     restart: always
     tty: true
     ports: 
@@ -46,9 +46,18 @@ services:
       - .:/home/node/app
     depends_on:
       - postgresdb
+    env_file:
+      - .env
     environment:
       - DATABASE_URL=${DATABASE_URL}
-    command: sh -c "npm install && npx prisma migrate deploy && npx prisma generate --schema=./prisma/schema.prisma && npm run build && psql -h postgresdb -U postgres -d budgetdb < ./postgres/scripts/initial-charge.sql && npm run start:dev"
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DATABASE=${POSTGRES_DATABASE}
+      - JWT_SECRET=${DATABASE_URL}
+      - ENCRYPT_JWT_SECRET${ENCRYPT_JWT_SECRET}
+      - JWT_EXPIRATION${JWT_EXPIRATION}
+    command: sh -c "npm install && npx prisma migrate deploy && npx prisma generate --schema=./prisma/schema.prisma && npm run build && psql -h ${POSTGRES_HOST} -U ${POSTGRES_USER} -d ${POSTGRES_DATABASE} -w ${POSTGRES_PASSWORD}  < ./postgres/scripts/initial-charge.sql && npm run start:dev"
     networks:
       - budget_network
 

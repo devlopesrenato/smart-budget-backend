@@ -14,7 +14,7 @@ export class SheetsService {
   constructor(
     private readonly utils: Utils
   ) { }
-  
+
   async create(createSheetDto: CreateSheetDto) {
     const sheet = await prisma.sheets.findUnique({
       where: {
@@ -26,9 +26,7 @@ export class SheetsService {
     }
     return prisma.sheets.create({
       data: {
-        ...createSheetDto,
-        createdAt: new Date(),
-        updatedAt: new Date()
+        ...createSheetDto
       }
     })
   }
@@ -80,8 +78,7 @@ export class SheetsService {
         id
       },
       data: {
-        ...updateSheetDto,
-        updatedAt: new Date()
+        ...updateSheetDto
       }
     })
   }

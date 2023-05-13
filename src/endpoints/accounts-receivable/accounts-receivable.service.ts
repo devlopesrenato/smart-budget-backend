@@ -12,7 +12,7 @@ export class AccountsReceivableService {
   constructor(
     private readonly utils: Utils
   ) { }
-  
+
   async create(createAccountsReceivableDto: CreateAccountsReceivableDto, userId: number) {
     const sheet = await prisma.sheets.findUnique({ where: { id: createAccountsReceivableDto.sheetId } });
 
@@ -31,8 +31,6 @@ export class AccountsReceivableService {
         ...createAccountsReceivableDto,
         creatorUserId: user.id,
         sheetId: sheet.id,
-        createdAt: new Date(),
-        updatedAt: new Date()
       }
     });
   }
@@ -119,7 +117,6 @@ export class AccountsReceivableService {
       },
       data: {
         ...updateAccountsReceivableDto,
-        updatedAt: new Date(),
         updaterUserId: Number(userIdUpdate)
       }
     });

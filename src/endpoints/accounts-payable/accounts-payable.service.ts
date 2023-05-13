@@ -29,8 +29,7 @@ export class AccountsPayableService {
     return prisma.accountsPayable.create({
       data: {
         ...createAccountsPayableDto,
-        createdAt: new Date(),
-        updatedAt: new Date()
+        creatorUserId: userId
       }
     });
   }
@@ -117,7 +116,6 @@ export class AccountsPayableService {
       },
       data: {
         ...updateAccountsPayableDto,
-        updatedAt: new Date(),
         updaterUserId: Number(userIdUpdate)
       }
     });

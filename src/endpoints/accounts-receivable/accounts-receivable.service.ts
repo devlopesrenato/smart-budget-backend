@@ -12,18 +12,18 @@ export class AccountsReceivableService {
   constructor(
     private readonly utils: Utils
   ) { }
-  
-  async create(createAccountsReceivableDto: CreateAccountsReceivableDto) {
+
+  async create(createAccountsReceivableDto: CreateAccountsReceivableDto, userId: number) {
     const sheet = await prisma.sheets.findUnique({ where: { id: createAccountsReceivableDto.sheetId } });
 
     if (!sheet) {
       throw new NotFoundError(`not found sheetId: ${createAccountsReceivableDto.sheetId}`);
     }
 
-    const user = await prisma.users.findUnique({ where: { id: createAccountsReceivableDto.creatorUserId } });
+    const user = await prisma.users.findUnique({ where: { id: userId } });
 
     if (!user) {
-      throw new NotFoundError(`not found userId: ${createAccountsReceivableDto.creatorUserId}`);
+      throw new NotFoundError(`user token invalid`);
     }
 
     return prisma.accountsReceivable.create({
@@ -31,8 +31,6 @@ export class AccountsReceivableService {
         ...createAccountsReceivableDto,
         creatorUserId: user.id,
         sheetId: sheet.id,
-        createdAt: new Date(),
-        updatedAt: new Date()
       }
     });
   }
@@ -119,7 +117,6 @@ export class AccountsReceivableService {
       },
       data: {
         ...updateAccountsReceivableDto,
-        updatedAt: new Date(),
         updaterUserId: Number(userIdUpdate)
       }
     });

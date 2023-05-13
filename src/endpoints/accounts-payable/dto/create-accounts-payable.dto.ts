@@ -1,20 +1,19 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsNumber, IsString } from "class-validator";
+import { IsNotEmpty, IsNumber, IsString } from "class-validator";
 
 export class CreateAccountsPayableDto {
-    @ApiProperty({ type: 'string', description: 'Descrição da conta a receber.' })
     @IsString()
+    @IsNotEmpty()
+    @ApiProperty({ type: 'string', description: 'Descrição da conta a receber.' })
     description: string;
 
-    @ApiProperty({ type: 'number', description: 'Valor da conta a receber.' })
     @IsNumber()
+    @IsNotEmpty()
+    @ApiProperty({ type: 'number', description: 'Valor da conta a receber.' })
     value: number;
 
-    @ApiProperty({ type: 'integer', description: 'Identificador do usuário que criou a conta a receber.' })
     @IsNumber()
-    creatorUserId: number;
-
+    @IsNotEmpty()
     @ApiProperty({ type: 'integer', description: 'Identificador da folha associada à conta a receber.' })
-    @IsNumber()
     sheetId: number;
 }

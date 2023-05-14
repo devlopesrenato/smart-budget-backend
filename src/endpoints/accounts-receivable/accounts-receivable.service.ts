@@ -26,17 +26,23 @@ export class AccountsReceivableService {
       throw new NotFoundError(`user token invalid`);
     }
 
-    return prisma.accountsReceivable.create({
+    const accountReceivableCreated = await prisma.accountsReceivable.create({
       data: {
         ...createAccountsReceivableDto,
         creatorUserId: user.id,
         sheetId: sheet.id,
       }
     });
+
+    return {
+      ...accountReceivableCreated,
+      createdAt: this.utils.getDateTimeZone(accountReceivableCreated.createdAt),
+      updatedAt: this.utils.getDateTimeZone(accountReceivableCreated.updatedAt)
+    }
   }
 
-  findAll() {
-    return prisma.accountsReceivable.findMany({
+  async findAll() {
+    const accountsReceivable = await prisma.accountsReceivable.findMany({
       include: {
         createdBy: {
           select: {
@@ -58,6 +64,12 @@ export class AccountsReceivableService {
         }
       }
     });
+
+    return accountsReceivable.map((item) => ({
+      ...item,
+      createdAt: this.utils.getDateTimeZone(item.createdAt),
+      updatedAt: this.utils.getDateTimeZone(item.updatedAt)
+    }))
   }
 
   async findOne(id: number) {
@@ -94,7 +106,11 @@ export class AccountsReceivableService {
       throw new NotFoundError(`not found accountReceivableId: ${id}`);
     }
 
-    return accountReceivable;
+    return {
+      ...accountReceivable,
+      createdAt: this.utils.getDateTimeZone(accountReceivable.createdAt),
+      updatedAt: this.utils.getDateTimeZone(accountReceivable.updatedAt)
+    }
   }
 
   async update(id: number, updateAccountsReceivableDto: UpdateAccountsReceivableDto, userIdUpdate: string) {
@@ -111,7 +127,7 @@ export class AccountsReceivableService {
       throw new NotFoundError(`not found accountReceivableId: ${id}`);
     }
 
-    return prisma.accountsReceivable.update({
+    const accountReceivableUpdated = await prisma.accountsReceivable.update({
       where: {
         id
       },
@@ -120,6 +136,12 @@ export class AccountsReceivableService {
         updaterUserId: Number(userIdUpdate)
       }
     });
+
+    return {
+      ...accountReceivableUpdated,
+      createdAt: this.utils.getDateTimeZone(accountReceivableUpdated.createdAt),
+      updatedAt: this.utils.getDateTimeZone(accountReceivableUpdated.updatedAt)
+    }
   }
 
   async remove(id: number) {
@@ -136,10 +158,17 @@ export class AccountsReceivableService {
       throw new NotFoundError(`not found accountReceivableId: ${id}`);
     }
 
-    return prisma.accountsReceivable.delete({
+    const accountReceivableDeleted = await prisma.accountsReceivable.delete({
       where: {
         id
       }
     });;
+
+    return {
+      ...accountReceivableDeleted,
+      createdAt: this.utils.getDateTimeZone(accountReceivableDeleted.createdAt),
+      updatedAt: this.utils.getDateTimeZone(accountReceivableDeleted.updatedAt)
+    }
+
   }
 }

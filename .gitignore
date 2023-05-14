@@ -37,4 +37,5 @@ lerna-debug.log*
 .env
 /postgres/data
 /postgres/data-dev
+/postgres/pgAdminData
 

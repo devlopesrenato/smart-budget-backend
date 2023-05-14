@@ -24,15 +24,27 @@ export class SheetsService {
     if (sheet) {
       throw new ConflictError(`this sheet already exists: ${createSheetDto.description}`);
     }
-    return prisma.sheets.create({
+    const sheetCreated = await prisma.sheets.create({
       data: {
         ...createSheetDto
       }
     })
+
+    return {
+      ...sheetCreated,
+      createdAt: this.utils.getDateTimeZone(sheetCreated.createdAt),
+      updatedAt: this.utils.getDateTimeZone(sheetCreated.updatedAt)
+    }
   }
 
-  findAll() {
-    return prisma.sheets.findMany();
+  async findAll() {
+    const sheets = await prisma.sheets.findMany();
+
+    return sheets.map((item) => ({
+      ...item,
+      createdAt: this.utils.getDateTimeZone(item.createdAt),
+      updatedAt: this.utils.getDateTimeZone(item.updatedAt)
+    }))
   }
 
   async findOne(id: number) {
@@ -59,6 +71,8 @@ export class SheetsService {
 
     return {
       ...sheet,
+      createdAt: this.utils.getDateTimeZone(sheet.createdAt),
+      updatedAt: this.utils.getDateTimeZone(sheet.updatedAt),
       totalAccountsPayable,
       totalAccountsReceivable,
       balance
@@ -69,11 +83,14 @@ export class SheetsService {
     if (!this.utils.isNotNumber(String(id))) {
       throw new BadRequestError('invalid id')
     }
+    
     const sheet = await prisma.sheets.findUnique({ where: { id } });
+    
     if (!sheet) {
       throw new NotFoundError(`not found sheetId: ${id}`);
     }
-    return prisma.sheets.update({
+
+    const sheetDeleted = await prisma.sheets.update({
       where: {
         id
       },
@@ -81,6 +98,12 @@ export class SheetsService {
         ...updateSheetDto
       }
     })
+
+    return {
+      ...sheetDeleted,
+      createdAt: this.utils.getDateTimeZone(sheetDeleted.createdAt),
+      updatedAt: this.utils.getDateTimeZone(sheetDeleted.updatedAt)
+    }
   }
 
   async remove(id: number) {

@@ -24,11 +24,14 @@ API de orçamento para gerenciar as despesas e receitas de um usuário.
 
 ```properties
 # prisma/nestjs
-DATABASE_URL=postgres://postgres:${POSTGRES_PASSWORD}@postgresdb:5432/budgetdb
+DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}/${POSTGRES_DATABASE}?schema=public
 
 # postgres
-POSTGRES_USER=userdb
+POSTGRES_HOST=0.0.0.0:5432
+POSTGRES_USER=admin
 POSTGRES_PASSWORD=12345678
+POSTGRES_DATABASE=budgetdb
+TIMEZONE='America/Sao_Paulo'
 
 # pgadmin
 PGADMIN_DEFAULT_EMAIL=admin@admin.com
@@ -38,6 +41,10 @@ PGADMIN_DEFAULT_PASSWORD=admin
 JWT_SECRET="12345678"
 ENCRYPT_JWT_SECRET="87654321"
 JWT_EXPIRATION="7d"
+
+# api
+API_URL="http://127.0.0.1:3000"
+
 ```
 
 4. Execute o comando **docker-compose up -d** para iniciar o banco de dados Postgres e a api em containers do Docker

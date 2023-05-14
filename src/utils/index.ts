@@ -13,7 +13,6 @@ export class Utils {
             const format = 'YYYY-MM-DDTHH:mm:ss.SSSZ';
             const localDate = moment.tz(date, timezone);
             const formattedDate = localDate.format(format);
-            console.log(formattedDate);
             return formattedDate;
         } catch (error) {
             console.log({

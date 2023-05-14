@@ -26,17 +26,22 @@ export class AccountsPayableService {
       throw new NotFoundError(`user token invalid`);
     }
 
-    return prisma.accountsPayable.create({
+    const accountPayableCreated = await prisma.accountsPayable.create({
       data: {
         ...createAccountsPayableDto,
-        createdAt: new Date(),
-        updatedAt: new Date()
+        creatorUserId: userId
       }
     });
+
+    return {
+      ...accountPayableCreated,
+      createdAt: this.utils.getDateTimeZone(accountPayableCreated.createdAt),
+      updatedAt: this.utils.getDateTimeZone(accountPayableCreated.updatedAt)
+    }
   }
 
-  findAll() {
-    return prisma.accountsPayable.findMany({
+  async findAll() {
+    const accountsPayable = await prisma.accountsPayable.findMany({
       include: {
         createdBy: {
           select: {
@@ -58,6 +63,12 @@ export class AccountsPayableService {
         }
       }
     });
+
+    return accountsPayable.map((item) => ({
+      ...item,
+      createdAt: this.utils.getDateTimeZone(item.createdAt),
+      updatedAt: this.utils.getDateTimeZone(item.updatedAt)
+    }))
   }
 
   async findOne(id: number) {
@@ -87,14 +98,18 @@ export class AccountsPayableService {
             description: true
           }
         }
-      }
-    });;
+      },
+    });
 
     if (!accountPayable) {
       throw new NotFoundError(`not found accountPayableId: ${id}`);
     }
 
-    return accountPayable;
+    return {
+      ...accountPayable,
+      createdAt: this.utils.getDateTimeZone(accountPayable.createdAt),
+      updatedAt: this.utils.getDateTimeZone(accountPayable.updatedAt)
+    }
   }
 
   async update(id: number, updateAccountsPayableDto: UpdateAccountsPayableDto, userIdUpdate: string) {
@@ -111,16 +126,21 @@ export class AccountsPayableService {
       throw new NotFoundError(`not found accountPayableId: ${id}`);
     }
 
-    return prisma.accountsPayable.update({
+    const accountPayableUpdated = await prisma.accountsPayable.update({
       where: {
         id
       },
       data: {
         ...updateAccountsPayableDto,
-        updatedAt: new Date(),
         updaterUserId: Number(userIdUpdate)
       }
     });
+
+    return {
+      ...accountPayableUpdated,
+      createdAt: this.utils.getDateTimeZone(accountPayable.createdAt),
+      updatedAt: this.utils.getDateTimeZone(accountPayable.updatedAt)
+    }
   }
 
   async remove(id: number) {
@@ -137,10 +157,16 @@ export class AccountsPayableService {
       throw new NotFoundError(`not found accountPayableId: ${id}`);
     }
 
-    return prisma.accountsPayable.delete({
+    const accountPayableDeleted = await prisma.accountsPayable.delete({
       where: {
         id
       }
     });;
+
+    return {
+      ...accountPayableDeleted,
+      createdAt: this.utils.getDateTimeZone(accountPayableDeleted.createdAt),
+      updatedAt: this.utils.getDateTimeZone(accountPayableDeleted.updatedAt)
+    }
   }
 }

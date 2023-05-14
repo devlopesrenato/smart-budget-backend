@@ -10,8 +10,6 @@ COPY package*.json ./
 
 COPY ./prisma/schema.prisma ./prisma/schema.prisma
 
-COPY ./.env ./.env
-
 RUN npm install
 
 COPY . .

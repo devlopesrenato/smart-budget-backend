@@ -29,7 +29,7 @@ export class UsersService {
     }
     const hashedPassword = await bcrypt.hash(createUserDto.password, saltRounds);
 
-    return await prisma.users.create({
+    const userCreated = await prisma.users.create({
       data: {
         ...createUserDto,
         password: hashedPassword,
@@ -37,10 +37,22 @@ export class UsersService {
         updatedAt: new Date()
       }
     });
+
+    return {
+      ...userCreated,
+      createdAt: this.utils.getDateTimeZone(userCreated.createdAt),
+      updatedAt: this.utils.getDateTimeZone(userCreated.updatedAt)
+    }
   }
 
-  findAll() {
-    return prisma.users.findMany();
+  async findAll() {
+    const users = await prisma.users.findMany();
+
+    return users.map((item) => ({
+      ...item,
+      createdAt: this.utils.getDateTimeZone(item.createdAt),
+      updatedAt: this.utils.getDateTimeZone(item.updatedAt)
+    }))
   }
 
   async findOne(id: number) {
@@ -51,7 +63,11 @@ export class UsersService {
     if (!user) {
       throw new NotFoundError(`not found userId: ${id}`);
     }
-    return user
+    return {
+      ...user,
+      createdAt: this.utils.getDateTimeZone(user.createdAt),
+      updatedAt: this.utils.getDateTimeZone(user.updatedAt)
+    }
   }
 
   async update(id: number, updateUserDto: UpdateUserDto) {
@@ -75,7 +91,7 @@ export class UsersService {
         ? await bcrypt.hash(updateUserDto.password, saltRounds)
         : undefined;
 
-    return prisma.users.update({
+    const userUpdated = await prisma.users.update({
       where: {
         id
       },
@@ -85,6 +101,13 @@ export class UsersService {
         updatedAt: new Date()
       }
     });
+
+    return {
+      ...userUpdated,
+      createdAt: this.utils.getDateTimeZone(userUpdated.createdAt),
+      updatedAt: this.utils.getDateTimeZone(userUpdated.updatedAt)
+    }
+
   }
 
   async remove(id: number) {
@@ -95,11 +118,18 @@ export class UsersService {
     if (!user) {
       throw new NotFoundError(`not found userId: ${id}`);
     }
-    return prisma.users.delete({
+    const userDeleted = await prisma.users.delete({
       where: {
         id
       }
     });
+
+    return {
+      ...userDeleted,
+      createdAt: this.utils.getDateTimeZone(userDeleted.createdAt),
+      updatedAt: this.utils.getDateTimeZone(userDeleted.updatedAt)
+    }
+
   }
 
   public async signin(signinDto: SigninDto): Promise<UserLogin> {

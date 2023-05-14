@@ -11,32 +11,32 @@ datasource db {
 }
 
 model AccountsPayable {
-  id            Int      @id @default(autoincrement())
+  id            Int       @id @default(autoincrement())
   description   String
   value         Float
-  createdAt     DateTime
-  updatedAt     DateTime
-  createdBy     Users?   @relation("crAccountsPayable", fields: [creatorUserId], references: [id])
+  createdAt     DateTime? @default(now()) @db.Timestamptz(3)
+  updatedAt     DateTime? @updatedAt @db.Timestamptz(3)
+  createdBy     Users?    @relation("crAccountsPayable", fields: [creatorUserId], references: [id])
   creatorUserId Int?
-  updatedBy     Users?   @relation("upAccountsPayable", fields: [updaterUserId], references: [id])
+  updatedBy     Users?    @relation("upAccountsPayable", fields: [updaterUserId], references: [id])
   updaterUserId Int?
-  sheet         Sheets?  @relation(fields: [sheetId], references: [id])
+  sheet         Sheets?   @relation(fields: [sheetId], references: [id])
   sheetId       Int?
 
   @@map("accounts-payable")
 }
 
 model AccountsReceivable {
-  id            Int      @id @default(autoincrement())
+  id            Int       @id @default(autoincrement())
   description   String
   value         Float
-  createdAt     DateTime
-  updatedAt     DateTime
-  createdBy     Users?   @relation("crAccountsReceivable", fields: [creatorUserId], references: [id])
+  createdAt     DateTime? @default(now()) @db.Timestamptz(3)
+  updatedAt     DateTime? @updatedAt @db.Timestamptz(3)
+  createdBy     Users?    @relation("crAccountsReceivable", fields: [creatorUserId], references: [id])
   creatorUserId Int?
-  updatedBy     Users?   @relation("upAccountsReceivable", fields: [updaterUserId], references: [id])
+  updatedBy     Users?    @relation("upAccountsReceivable", fields: [updaterUserId], references: [id])
   updaterUserId Int?
-  sheet         Sheets?  @relation(fields: [sheetId], references: [id])
+  sheet         Sheets?   @relation(fields: [sheetId], references: [id])
   sheetId       Int?
 
   @@map("accounts-receivable")
@@ -45,8 +45,8 @@ model AccountsReceivable {
 model Sheets {
   id                 Int                  @id @default(autoincrement())
   description        String               @unique
-  createdAt          DateTime
-  updatedAt          DateTime
+  createdAt          DateTime?            @default(now()) @db.Timestamptz(3)
+  updatedAt          DateTime?            @updatedAt @db.Timestamptz(3)
   accountsPayable    AccountsPayable[]
   accountsReceivable AccountsReceivable[]
 
@@ -58,8 +58,8 @@ model Users {
   email                     String               @unique
   name                      String
   password                  String
-  createdAt                 DateTime
-  updatedAt                 DateTime
+  createdAt                 DateTime?            @default(now()) @db.Timestamptz(3)
+  updatedAt                 DateTime?            @updatedAt @db.Timestamptz(3)
   createdAccountsPayable    AccountsPayable[]    @relation("crAccountsPayable")
   updatedAccountsPayable    AccountsPayable[]    @relation("upAccountsPayable")
   createdAccountsReceivable AccountsReceivable[] @relation("crAccountsReceivable")

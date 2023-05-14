@@ -10,7 +10,7 @@ export class AppController {
   @Get()
   @ApiOperation({ summary: 'Status da Api', description: 'Retorna o status da Api' })
   @ApiResponse({ status: 200, description: 'Api Orçamento Pessoal executando com sucesso' })
-  getApi(): string {
+  getApi(): object {
     return this.appService.getApi();
   }
 }

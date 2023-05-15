@@ -21,6 +21,7 @@ export class SheetsService {
         description: createSheetDto.description
       }
     });
+    
     if (sheet) {
       throw new ConflictError(`this sheet already exists: ${createSheetDto.description}`);
     }

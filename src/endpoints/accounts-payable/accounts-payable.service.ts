@@ -5,6 +5,7 @@ import { PrismaClient } from '@prisma/client';
 import { NotFoundError } from 'src/common/errors/types/NotFoundError';
 import { Utils } from 'src/utils';
 import { BadRequestError } from 'src/common/errors/types/BadRequestError';
+import { UnauthorizedError } from 'src/common/errors/types/UnauthorizedError';
 
 const prisma = new PrismaClient();
 @Injectable()
@@ -14,16 +15,17 @@ export class AccountsPayableService {
   ) { }
 
   async create(createAccountsPayableDto: CreateAccountsPayableDto, userId: number) {
+    
+    const user = await prisma.users.findUnique({ where: { id: userId } });
+    
+    if (!user) {
+      throw new UnauthorizedError(`user token invalid`);
+    }
+
     const sheet = await prisma.sheets.findUnique({ where: { id: createAccountsPayableDto.sheetId } });
 
     if (!sheet) {
       throw new NotFoundError(`not found sheetId: ${createAccountsPayableDto.sheetId}`);
-    }
-
-    const user = await prisma.users.findUnique({ where: { id: userId } });
-
-    if (!user) {
-      throw new NotFoundError(`user token invalid`);
     }
 
     const accountPayableCreated = await prisma.accountsPayable.create({
@@ -116,6 +118,13 @@ export class AccountsPayableService {
     if (!this.utils.isNotNumber(String(id))) {
       throw new BadRequestError('invalid id')
     }
+
+    const user = await prisma.users.findUnique({ where: { id: Number(userIdUpdate) } });
+    
+    if (!user) {
+      throw new UnauthorizedError(`user token invalid`);
+    }
+
     const accountPayable = await prisma.accountsPayable.findUnique({
       where: {
         id
@@ -124,6 +133,16 @@ export class AccountsPayableService {
 
     if (!accountPayable) {
       throw new NotFoundError(`not found accountPayableId: ${id}`);
+    }
+
+    const sheet = await prisma.sheets.findUnique({
+      where: {
+        id: updateAccountsPayableDto.sheetId
+      }
+    })
+
+    if (!sheet) {
+      throw new NotFoundError(`not found sheetId: ${id}`);
     }
 
     const accountPayableUpdated = await prisma.accountsPayable.update({

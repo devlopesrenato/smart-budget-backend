@@ -5,6 +5,7 @@ import { PrismaClient } from '@prisma/client';
 import { NotFoundError } from 'src/common/errors/types/NotFoundError';
 import { BadRequestError } from 'src/common/errors/types/BadRequestError';
 import { Utils } from 'src/utils';
+import { UnauthorizedError } from 'src/common/errors/types/UnauthorizedError';
 
 const prisma = new PrismaClient();
 @Injectable()
@@ -14,16 +15,17 @@ export class AccountsReceivableService {
   ) { }
 
   async create(createAccountsReceivableDto: CreateAccountsReceivableDto, userId: number) {
+        
+    const user = await prisma.users.findUnique({ where: { id: userId } });
+    
+    if (!user) {
+      throw new UnauthorizedError(`user token invalid`);
+    }
+    
     const sheet = await prisma.sheets.findUnique({ where: { id: createAccountsReceivableDto.sheetId } });
 
     if (!sheet) {
       throw new NotFoundError(`not found sheetId: ${createAccountsReceivableDto.sheetId}`);
-    }
-
-    const user = await prisma.users.findUnique({ where: { id: userId } });
-
-    if (!user) {
-      throw new NotFoundError(`user token invalid`);
     }
 
     const accountReceivableCreated = await prisma.accountsReceivable.create({
@@ -117,6 +119,13 @@ export class AccountsReceivableService {
     if (!this.utils.isNotNumber(String(id))) {
       throw new BadRequestError('invalid id')
     }
+
+    const user = await prisma.users.findUnique({ where: { id: Number(userIdUpdate) } });
+    
+    if (!user) {
+      throw new UnauthorizedError(`user token invalid`);
+    }
+    
     const accountReceivable = await prisma.accountsReceivable.findUnique({
       where: {
         id
@@ -125,6 +134,16 @@ export class AccountsReceivableService {
 
     if (!accountReceivable) {
       throw new NotFoundError(`not found accountReceivableId: ${id}`);
+    }
+
+    const sheet = await prisma.sheets.findUnique({
+      where: {
+        id: updateAccountsReceivableDto.sheetId
+      }
+    })
+
+    if (!sheet) {
+      throw new NotFoundError(`not found sheetId: ${id}`);
     }
 
     const accountReceivableUpdated = await prisma.accountsReceivable.update({

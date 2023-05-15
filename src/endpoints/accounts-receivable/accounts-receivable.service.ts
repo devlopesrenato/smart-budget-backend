@@ -6,6 +6,7 @@ import { NotFoundError } from 'src/common/errors/types/NotFoundError';
 import { BadRequestError } from 'src/common/errors/types/BadRequestError';
 import { Utils } from 'src/utils';
 import { UnauthorizedError } from 'src/common/errors/types/UnauthorizedError';
+import { ConflictError } from 'src/common/errors/types/ConflictError';
 
 const prisma = new PrismaClient();
 @Injectable()
@@ -26,6 +27,17 @@ export class AccountsReceivableService {
 
     if (!sheet) {
       throw new NotFoundError(`not found sheetId: ${createAccountsReceivableDto.sheetId}`);
+    }
+
+    const accountReceivable = await prisma.accountsReceivable.findFirst({
+      where: {
+        description: createAccountsReceivableDto.description,
+        sheetId: createAccountsReceivableDto.sheetId
+      }
+    })
+
+    if (accountReceivable) {
+      throw new ConflictError(`account receivable already exists for this sheetId: ${createAccountsReceivableDto.sheetId}`)
     }
 
     const accountReceivableCreated = await prisma.accountsReceivable.create({

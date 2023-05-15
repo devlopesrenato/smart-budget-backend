@@ -6,6 +6,7 @@ import { NotFoundError } from 'src/common/errors/types/NotFoundError';
 import { Utils } from 'src/utils';
 import { BadRequestError } from 'src/common/errors/types/BadRequestError';
 import { UnauthorizedError } from 'src/common/errors/types/UnauthorizedError';
+import { ConflictError } from 'src/common/errors/types/ConflictError';
 
 const prisma = new PrismaClient();
 @Injectable()
@@ -15,9 +16,9 @@ export class AccountsPayableService {
   ) { }
 
   async create(createAccountsPayableDto: CreateAccountsPayableDto, userId: number) {
-    
+
     const user = await prisma.users.findUnique({ where: { id: userId } });
-    
+
     if (!user) {
       throw new UnauthorizedError(`user token invalid`);
     }
@@ -26,6 +27,17 @@ export class AccountsPayableService {
 
     if (!sheet) {
       throw new NotFoundError(`not found sheetId: ${createAccountsPayableDto.sheetId}`);
+    }
+
+    const accountPayable = await prisma.accountsPayable.findFirst({
+      where: {
+        description: createAccountsPayableDto.description,
+        sheetId: createAccountsPayableDto.sheetId
+      }
+    })
+
+    if (accountPayable) {
+      throw new ConflictError(`account payable already exists for this sheetId: ${createAccountsPayableDto.sheetId}`)
     }
 
     const accountPayableCreated = await prisma.accountsPayable.create({
@@ -120,7 +132,7 @@ export class AccountsPayableService {
     }
 
     const user = await prisma.users.findUnique({ where: { id: Number(userIdUpdate) } });
-    
+
     if (!user) {
       throw new UnauthorizedError(`user token invalid`);
     }

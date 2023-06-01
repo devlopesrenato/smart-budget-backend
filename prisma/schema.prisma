@@ -16,12 +16,10 @@ model AccountsPayable {
   value         Float
   createdAt     DateTime? @default(now()) @db.Timestamptz(3)
   updatedAt     DateTime? @updatedAt @db.Timestamptz(3)
-  createdBy     Users?    @relation("crAccountsPayable", fields: [creatorUserId], references: [id])
-  creatorUserId Int?
-  updatedBy     Users?    @relation("upAccountsPayable", fields: [updaterUserId], references: [id])
-  updaterUserId Int?
-  sheet         Sheets?   @relation(fields: [sheetId], references: [id])
-  sheetId       Int?
+  createdBy     Users     @relation(fields: [creatorUserId], references: [id])
+  creatorUserId Int
+  sheet         Sheets    @relation(fields: [sheetId], references: [id])
+  sheetId       Int
 
   @@map("accounts-payable")
 }
@@ -32,12 +30,10 @@ model AccountsReceivable {
   value         Float
   createdAt     DateTime? @default(now()) @db.Timestamptz(3)
   updatedAt     DateTime? @updatedAt @db.Timestamptz(3)
-  createdBy     Users?    @relation("crAccountsReceivable", fields: [creatorUserId], references: [id])
-  creatorUserId Int?
-  updatedBy     Users?    @relation("upAccountsReceivable", fields: [updaterUserId], references: [id])
-  updaterUserId Int?
-  sheet         Sheets?   @relation(fields: [sheetId], references: [id])
-  sheetId       Int?
+  createdBy     Users     @relation(fields: [creatorUserId], references: [id])
+  creatorUserId Int
+  sheet         Sheets    @relation(fields: [sheetId], references: [id])
+  sheetId       Int
 
   @@map("accounts-receivable")
 }
@@ -46,6 +42,8 @@ model Sheets {
   id                 Int                  @id @default(autoincrement())
   description        String               @unique
   createdAt          DateTime?            @default(now()) @db.Timestamptz(3)
+  creatorUserId      Int
+  createdBy          Users                @relation(fields: [creatorUserId], references: [id])
   updatedAt          DateTime?            @updatedAt @db.Timestamptz(3)
   accountsPayable    AccountsPayable[]
   accountsReceivable AccountsReceivable[]
@@ -60,10 +58,9 @@ model Users {
   password                  String
   createdAt                 DateTime?            @default(now()) @db.Timestamptz(3)
   updatedAt                 DateTime?            @updatedAt @db.Timestamptz(3)
-  createdAccountsPayable    AccountsPayable[]    @relation("crAccountsPayable")
-  updatedAccountsPayable    AccountsPayable[]    @relation("upAccountsPayable")
-  createdAccountsReceivable AccountsReceivable[] @relation("crAccountsReceivable")
-  updatedAccountsReceivable AccountsReceivable[] @relation("upAccountsReceivable")
+  createdAccountsPayable    AccountsPayable[]
+  createdAccountsReceivable AccountsReceivable[]
+  sheets                    Sheets[]
 
   @@map("users")
 }

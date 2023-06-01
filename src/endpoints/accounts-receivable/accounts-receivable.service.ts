@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
+import { PrismaClient } from '@prisma/client';
+import { BadRequestError } from 'src/common/errors/types/BadRequestError';
+import { ConflictError } from 'src/common/errors/types/ConflictError';
+import { NotFoundError } from 'src/common/errors/types/NotFoundError';
+import { UnauthorizedError } from 'src/common/errors/types/UnauthorizedError';
+import { Utils } from 'src/utils';
 import { CreateAccountsReceivableDto } from './dto/create-accounts-receivable.dto';
 import { UpdateAccountsReceivableDto } from './dto/update-accounts-receivable.dto';
-import { PrismaClient } from '@prisma/client';
-import { NotFoundError } from 'src/common/errors/types/NotFoundError';
-import { BadRequestError } from 'src/common/errors/types/BadRequestError';
-import { Utils } from 'src/utils';
-import { UnauthorizedError } from 'src/common/errors/types/UnauthorizedError';
-import { ConflictError } from 'src/common/errors/types/ConflictError';
 
 const prisma = new PrismaClient();
 @Injectable()
@@ -16,17 +16,21 @@ export class AccountsReceivableService {
   ) { }
 
   async create(createAccountsReceivableDto: CreateAccountsReceivableDto, userId: number) {
-        
+
     const user = await prisma.users.findUnique({ where: { id: userId } });
-    
+
     if (!user) {
       throw new UnauthorizedError(`user token invalid`);
     }
-    
+
     const sheet = await prisma.sheets.findUnique({ where: { id: createAccountsReceivableDto.sheetId } });
 
     if (!sheet) {
       throw new NotFoundError(`not found sheetId: ${createAccountsReceivableDto.sheetId}`);
+    }
+
+    if (sheet.creatorUserId !== userId) {
+      throw new UnauthorizedError('you don\'t have permission to add this receivable in this sheet')
     }
 
     const accountReceivable = await prisma.accountsReceivable.findFirst({
@@ -55,16 +59,13 @@ export class AccountsReceivableService {
     }
   }
 
-  async findAll() {
+  async findAll(userId: number) {
     const accountsReceivable = await prisma.accountsReceivable.findMany({
+      where: {
+        creatorUserId: userId
+      },
       include: {
         createdBy: {
-          select: {
-            id: true,
-            name: true
-          }
-        },
-        updatedBy: {
           select: {
             id: true,
             name: true
@@ -86,7 +87,7 @@ export class AccountsReceivableService {
     }))
   }
 
-  async findOne(id: number) {
+  async findOne(id: number, userId: number) {
     if (!this.utils.isNotNumber(String(id))) {
       throw new BadRequestError('invalid id')
     }
@@ -96,12 +97,6 @@ export class AccountsReceivableService {
       },
       include: {
         createdBy: {
-          select: {
-            id: true,
-            name: true
-          }
-        },
-        updatedBy: {
           select: {
             id: true,
             name: true
@@ -120,6 +115,10 @@ export class AccountsReceivableService {
       throw new NotFoundError(`not found accountReceivableId: ${id}`);
     }
 
+    if (accountReceivable.creatorUserId !== userId) {
+      throw new UnauthorizedError('you don\'t have permission to access this account receivable')
+    }
+
     return {
       ...accountReceivable,
       createdAt: this.utils.getDateTimeZone(accountReceivable.createdAt),
@@ -133,11 +132,28 @@ export class AccountsReceivableService {
     }
 
     const user = await prisma.users.findUnique({ where: { id: Number(userIdUpdate) } });
-    
+
     if (!user) {
       throw new UnauthorizedError(`user token invalid`);
     }
-    
+
+    if (updateAccountsReceivableDto.sheetId) {
+      const sheet = await prisma.sheets.findUnique({
+        where: {
+          id: updateAccountsReceivableDto.sheetId
+        }
+      })
+
+      if (!sheet) {
+        throw new BadRequestError('sheetId invalid')
+      }
+
+      if (sheet.creatorUserId !== Number(userIdUpdate)) {
+        throw new UnauthorizedError('you don\'t have permission to add this receivable in this sheet')
+      }
+      return sheet
+    }
+
     const accountReceivable = await prisma.accountsReceivable.findUnique({
       where: {
         id
@@ -148,24 +164,11 @@ export class AccountsReceivableService {
       throw new NotFoundError(`not found accountReceivableId: ${id}`);
     }
 
-    const sheet = await prisma.sheets.findUnique({
-      where: {
-        id: updateAccountsReceivableDto.sheetId
-      }
-    })
-
-    if (!sheet) {
-      throw new NotFoundError(`not found sheetId: ${id}`);
-    }
-
     const accountReceivableUpdated = await prisma.accountsReceivable.update({
       where: {
         id
       },
-      data: {
-        ...updateAccountsReceivableDto,
-        updaterUserId: Number(userIdUpdate)
-      }
+      data: updateAccountsReceivableDto
     });
 
     return {
@@ -175,7 +178,7 @@ export class AccountsReceivableService {
     }
   }
 
-  async remove(id: number) {
+  async remove(id: number, userId: number) {
     if (!this.utils.isNotNumber(String(id))) {
       throw new BadRequestError('invalid id')
     }
@@ -187,6 +190,10 @@ export class AccountsReceivableService {
 
     if (!accountReceivable) {
       throw new NotFoundError(`not found accountReceivableId: ${id}`);
+    }
+
+    if (accountReceivable.creatorUserId !== userId) {
+      throw new UnauthorizedError('you don\'t have permission to delete this account receivable')
     }
 
     const accountReceivableDeleted = await prisma.accountsReceivable.delete({

@@ -1,12 +1,13 @@
 import { Injectable } from '@nestjs/common';
+import { PrismaClient } from '@prisma/client';
+import { BadRequestError } from 'src/common/errors/types/BadRequestError';
+import { ConflictError } from 'src/common/errors/types/ConflictError';
+import { NotFoundError } from 'src/common/errors/types/NotFoundError';
+import { UnauthorizedError } from 'src/common/errors/types/UnauthorizedError';
+import { Utils } from 'src/utils';
+import sumProp from '../../utils/sumProp';
 import { CreateSheetDto } from './dto/create-sheet.dto';
 import { UpdateSheetDto } from './dto/update-sheet.dto';
-import { PrismaClient } from '@prisma/client';
-import sumProp from '../../utils/sumProp'
-import { NotFoundError } from 'src/common/errors/types/NotFoundError';
-import { ConflictError } from 'src/common/errors/types/ConflictError';
-import { BadRequestError } from 'src/common/errors/types/BadRequestError';
-import { Utils } from 'src/utils';
 
 const prisma = new PrismaClient();
 @Injectable()
@@ -15,20 +16,28 @@ export class SheetsService {
     private readonly utils: Utils
   ) { }
 
-  async create(createSheetDto: CreateSheetDto) {
+  async create(createSheetDto: CreateSheetDto, userID: number) {
+    const user = await prisma.users.findUnique({ where: { id: userID } });
+
+    if (!user) {
+      throw new UnauthorizedError(`user token invalid`);
+    }
+
     const sheet = await prisma.sheets.findUnique({
       where: {
         description: createSheetDto.description
       }
     });
-    
+
     if (sheet) {
       throw new ConflictError(`this sheet already exists: ${createSheetDto.description}`);
     }
     const sheetCreated = await prisma.sheets.create({
       data: {
-        ...createSheetDto
+        ...createSheetDto,
+        creatorUserId: user.id,
       }
+
     })
 
     return {
@@ -38,8 +47,18 @@ export class SheetsService {
     }
   }
 
-  async findAll() {
-    const sheets = await prisma.sheets.findMany();
+  async findAll(userID: number) {
+    const user = await prisma.users.findUnique({ where: { id: userID } });
+
+    if (!user) {
+      throw new UnauthorizedError(`user token invalid`);
+    }
+
+    const sheets = await prisma.sheets.findMany({
+      where: {
+        creatorUserId: user.id
+      }
+    });
 
     return sheets.map((item) => ({
       ...item,
@@ -48,7 +67,17 @@ export class SheetsService {
     }))
   }
 
-  async findOne(id: number) {
+  async findOne(id: number, userID: number) {
+    const user = await prisma.users.findUnique({
+      where: {
+        id: userID
+      }
+    });
+
+    if (!user) {
+      throw new UnauthorizedError(`user token invalid`);
+    }
+
     if (!this.utils.isNotNumber(String(id))) {
       throw new BadRequestError('invalid id')
     }
@@ -66,6 +95,10 @@ export class SheetsService {
       throw new NotFoundError(`not found sheetId: ${id}`);
     }
 
+    if (sheet.creatorUserId !== userID) {
+      throw new UnauthorizedError('you don\'t have permission to access this sheet')
+    }
+
     const totalAccountsPayable = sumProp(sheet.accountsPayable, 'value')
     const totalAccountsReceivable = sumProp(sheet.accountsReceivable, 'value')
     const balance = parseFloat((totalAccountsReceivable - totalAccountsPayable).toFixed(2));
@@ -80,15 +113,26 @@ export class SheetsService {
     }
   }
 
-  async update(id: number, updateSheetDto: UpdateSheetDto) {
+  async update(id: number, updateSheetDto: UpdateSheetDto, userID: number) {
+    const user = await prisma.users.findUnique({ where: { id: userID } });
+
+    if (!user) {
+      throw new UnauthorizedError(`user token invalid`);
+    }
+
+
     if (!this.utils.isNotNumber(String(id))) {
       throw new BadRequestError('invalid id')
     }
-    
+
     const sheet = await prisma.sheets.findUnique({ where: { id } });
-    
+
     if (!sheet) {
       throw new NotFoundError(`not found sheetId: ${id}`);
+    }
+
+    if (sheet.creatorUserId !== userID) {
+      throw new UnauthorizedError('you don\'t have permission to modify this sheet')
     }
 
     const sheetDeleted = await prisma.sheets.update({
@@ -107,7 +151,14 @@ export class SheetsService {
     }
   }
 
-  async remove(id: number) {
+  async remove(id: number, userID: number) {
+    const user = await prisma.users.findUnique({ where: { id: userID } });
+
+    if (!user) {
+      throw new UnauthorizedError(`user token invalid`);
+    }
+
+
     if (!this.utils.isNotNumber(String(id))) {
       throw new BadRequestError('invalid id')
     }
@@ -115,6 +166,11 @@ export class SheetsService {
     if (!sheet) {
       throw new NotFoundError(`not found sheetId: ${id}`);
     }
+
+    if (sheet.creatorUserId !== userID) {
+      throw new UnauthorizedError('you don\'t have permission to delete this sheet')
+    }
+
     return prisma.sheets.delete({
       where: {
         id

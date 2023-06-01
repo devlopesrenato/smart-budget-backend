@@ -14,6 +14,12 @@ export class UserEntity implements Users {
   @ApiProperty({ type: 'string', description: 'Senha do usuário.' })
   password: string;
 
+  @ApiProperty({ type: 'string', description: 'Status da validação do email.' })
+  emailValidated: boolean;
+
+  @ApiProperty({ type: 'string', description: 'Data da validação do email.' })
+  emailValidatedAt: Date;
+
   @ApiProperty({ type: 'string', format: 'date-time', description: 'Data de criação do registro.' })
   createdAt: Date;
 

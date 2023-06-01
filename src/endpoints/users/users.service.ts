@@ -1,16 +1,16 @@
 import { Injectable } from '@nestjs/common';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
-import * as bcrypt from 'bcryptjs';
 import { PrismaClient } from '@prisma/client';
-import { UserEntity } from './entities/user.entity';
+import * as bcrypt from 'bcryptjs';
 import { AuthService } from 'src/auth/auth.service';
-import { SigninDto } from './dto/signin.dto';
+import { BadRequestError } from 'src/common/errors/types/BadRequestError';
+import { ConflictError } from 'src/common/errors/types/ConflictError';
 import { NotFoundError } from 'src/common/errors/types/NotFoundError';
 import { UnauthorizedError } from 'src/common/errors/types/UnauthorizedError';
-import { ConflictError } from 'src/common/errors/types/ConflictError';
-import { BadRequestError } from 'src/common/errors/types/BadRequestError';
 import { Utils } from 'src/utils';
+import { CreateUserDto } from './dto/create-user.dto';
+import { SigninDto } from './dto/signin.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { UserEntity } from './entities/user.entity';
 
 const prisma = new PrismaClient();
 const saltRounds = 10;
@@ -32,6 +32,7 @@ export class UsersService {
     const userCreated = await prisma.users.create({
       data: {
         ...createUserDto,
+        emailValidated: false,
         password: hashedPassword,
         createdAt: new Date(),
         updatedAt: new Date()
@@ -45,17 +46,7 @@ export class UsersService {
     }
   }
 
-  async findAll() {
-    const users = await prisma.users.findMany();
-
-    return users.map((item) => ({
-      ...item,
-      createdAt: this.utils.getDateTimeZone(item.createdAt),
-      updatedAt: this.utils.getDateTimeZone(item.updatedAt)
-    }))
-  }
-
-  async findOne(id: number) {
+  async findOne(id: number, userID: number) {
     if (!this.utils.isNotNumber(String(id))) {
       throw new BadRequestError('invalid id')
     }
@@ -63,6 +54,11 @@ export class UsersService {
     if (!user) {
       throw new NotFoundError(`not found userId: ${id}`);
     }
+
+    if (user.id !== userID) {
+      throw new UnauthorizedError('you don\'t have permission to access this user')
+    }
+
     return {
       ...user,
       createdAt: this.utils.getDateTimeZone(user.createdAt),
@@ -70,13 +66,17 @@ export class UsersService {
     }
   }
 
-  async update(id: number, updateUserDto: UpdateUserDto) {
+  async update(id: number, updateUserDto: UpdateUserDto, userID: number) {
     if (!this.utils.isNotNumber(String(id))) {
       throw new BadRequestError('invalid id')
     }
     const user = await prisma.users.findUnique({ where: { id } });
     if (!user) {
       throw new NotFoundError(`not found userId: ${id}`);
+    }
+
+    if (user.id !== userID) {
+      throw new UnauthorizedError('you don\'t have permission to access this user')
     }
 
     if (updateUserDto?.email) {
@@ -110,7 +110,7 @@ export class UsersService {
 
   }
 
-  async remove(id: number) {
+  async remove(id: number, userID: number) {
     if (!this.utils.isNotNumber(String(id))) {
       throw new BadRequestError('invalid id')
     }
@@ -118,6 +118,11 @@ export class UsersService {
     if (!user) {
       throw new NotFoundError(`not found userId: ${id}`);
     }
+
+    if (user.id !== userID) {
+      throw new UnauthorizedError('you don\'t have permission to access this user')
+    }
+
     const userDeleted = await prisma.users.delete({
       where: {
         id
@@ -142,6 +147,11 @@ export class UsersService {
       throw new UnauthorizedError('Invalid Credentials');
     }
     const jwtToken = await this.authService.createAccessToken(user.id);
+
+    if (!user.emailValidated) {
+      throw new UnauthorizedError('email not validated. validate the email before logging in')
+    }
+
     return {
       id: user.id,
       name: user.name,

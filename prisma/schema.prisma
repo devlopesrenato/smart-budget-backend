@@ -56,6 +56,8 @@ model Users {
   email                     String               @unique
   name                      String
   password                  String
+  emailValidated            Boolean
+  emailValidatedAt          DateTime?
   createdAt                 DateTime?            @default(now()) @db.Timestamptz(3)
   updatedAt                 DateTime?            @updatedAt @db.Timestamptz(3)
   createdAccountsPayable    AccountsPayable[]

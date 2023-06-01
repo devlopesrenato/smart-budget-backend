@@ -25,6 +25,7 @@ export class UsersController {
   @ApiOkResponse({ description: 'Usuário encontrado com sucesso.', type: UserEntity })
   @ApiBadRequestResponse(ApiResponseGenerate(400, ["Token not sent.", "invalid id", "Bad Request"]))
   @ApiUnauthorizedResponse(ApiResponseGenerate(401, "Unauthorized"))
+  @ApiUnauthorizedResponse(ApiResponseGenerate(409, "this email already exists: example@example.com"))
   @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()
   findOne(@Param('id') id: string, @Req() req) {
@@ -67,6 +68,7 @@ export class UsersController {
   })
   @ApiBadRequestResponse(ApiResponseGenerate(400, ["E-mail inválido!", "Senha inválida!"]))
   @ApiUnauthorizedResponse(ApiResponseGenerate(401, "Invalid Credentials"))
+  @ApiUnauthorizedResponse(ApiResponseGenerate(401, "email not validated. validate the email before logging in"))
   public async signin(
     @Body() signinDto: SigninDto,
   ): Promise<LoginResponse> {

@@ -1,10 +1,10 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Req, UseGuards } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+import { ApiBadRequestResponse, ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiResponse, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
+import { ApiResponseGenerate } from 'src/@types/swagger/api-response-generate';
 import { AccountsReceivableService } from './accounts-receivable.service';
 import { CreateAccountsReceivableDto } from './dto/create-accounts-receivable.dto';
 import { UpdateAccountsReceivableDto } from './dto/update-accounts-receivable.dto';
-import { ApiTags, ApiResponse, ApiParam, ApiBody, ApiBearerAuth, ApiOperation, ApiUnauthorizedResponse, ApiBadRequestResponse } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
-import { ApiResponseGenerate } from 'src/@types/swagger/api-response-generate';
 import { AccountsReceivableEntity } from './entities/accounts-receivable.entity';
 
 @ApiTags('Contas a Receber')
@@ -29,8 +29,8 @@ export class AccountsReceivableController {
   @ApiResponse({ status: 200, description: 'Contas a receber retornadas com sucesso', type: [AccountsReceivableEntity] })
   @ApiBadRequestResponse(ApiResponseGenerate(400, ["Token not sent.", "Bad Request"]))
   @ApiUnauthorizedResponse(ApiResponseGenerate(401, "Unauthorized"))
-  findAll() {
-    return this.accountsReceivableService.findAll();
+  findAll(@Req() req) {
+    return this.accountsReceivableService.findAll(req.user?.id);
   }
 
   @Get(':id')
@@ -40,8 +40,8 @@ export class AccountsReceivableController {
   @ApiResponse(ApiResponseGenerate(404, "Conta a receber não encontrada"))
   @ApiBadRequestResponse(ApiResponseGenerate(400, ["Token not sent.", "invalid id", "Bad Request"]))
   @ApiUnauthorizedResponse(ApiResponseGenerate(401, "Unauthorized"))
-  findOne(@Param('id') id: string) {
-    return this.accountsReceivableService.findOne(+id);
+  findOne(@Param('id') id: string, @Req() req) {
+    return this.accountsReceivableService.findOne(+id, req.user?.id);
   }
 
   @Patch(':id')
@@ -63,7 +63,7 @@ export class AccountsReceivableController {
   @ApiResponse(ApiResponseGenerate(404, "Conta a receber não encontrada"))
   @ApiBadRequestResponse(ApiResponseGenerate(400, ["Token not sent.", "invalid id", "Bad Request"]))
   @ApiUnauthorizedResponse(ApiResponseGenerate(401, "Unauthorized"))
-  remove(@Param('id') id: string) {
-    return this.accountsReceivableService.remove(+id);
+  remove(@Param('id') id: string, @Req() req) {
+    return this.accountsReceivableService.remove(+id, req.user?.id);
   }
 }

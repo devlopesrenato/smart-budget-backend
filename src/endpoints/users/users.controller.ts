@@ -55,7 +55,7 @@ export class UsersController {
   }
 
   @Post('signin')
-  @ApiOperation({ summary: 'Login do usuário', description: 'Retorna os dados do usuário e um token de acesso..' })
+  @ApiOperation({ summary: 'Login do usuário', description: 'Retorna os dados do usuário e um token de acesso.' })
   @ApiResponse({
     status: 200, description: 'Login efetuado com sucesso.',
     schema: {
@@ -76,6 +76,16 @@ export class UsersController {
   }
 
   @Post('signup/confirm-email')
+  @ApiOperation({ summary: 'Confirmação de email', description: 'Cofirma o email do usuário.' })
+  @ApiResponse({
+    status: 200, description: 'Email confirmado com sucesso.',
+    schema: {
+      example: {
+        statusCode: 200,
+        message: 'email confirmed successfully',        
+      },
+    },
+  })
   @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()
   public emailConfirmation(@Req() req) {

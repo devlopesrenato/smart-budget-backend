@@ -1,10 +1,10 @@
 import {
-    Injectable,
-    BadRequestException,
-    UnauthorizedException,
-  } from '@nestjs/common';
-  import { Request } from 'express';
-  import { sign } from 'jsonwebtoken';
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
+import { Request } from 'express';
+import { sign } from 'jsonwebtoken';
 import { PrismaService } from 'src/prisma.service';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
    

@@ -13,13 +13,6 @@ import { UsersService } from './users.service';
 export class UsersController {
   constructor(private readonly usersService: UsersService) { }
 
-  @Post()
-  @ApiOperation({ summary: 'Criar novo usuário', description: 'Cria um novo usuário com as informações fornecidas.' })
-  @ApiCreatedResponse({ description: 'Usuário criado com sucesso.', type: UserEntity })
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.usersService.create(createUserDto);
-  }
-
   @Get(':id')
   @ApiOperation({ summary: 'Buscar usuário por ID', description: 'Retorna as informações do usuário com o ID fornecido.' })
   @ApiOkResponse({ description: 'Usuário encontrado com sucesso.', type: UserEntity })
@@ -54,6 +47,13 @@ export class UsersController {
     return this.usersService.remove(+id, req.user?.id);
   }
 
+  @Post('signup')
+  @ApiOperation({ summary: 'Criar novo usuário', description: 'Cria um novo usuário com as informações fornecidas.' })
+  @ApiCreatedResponse({ description: 'Usuário criado com sucesso.', type: UserEntity })
+  create(@Body() createUserDto: CreateUserDto) {
+    return this.usersService.signup(createUserDto);
+  }
+
   @Post('signin')
   @ApiOperation({ summary: 'Login do usuário', description: 'Retorna os dados do usuário e um token de acesso..' })
   @ApiResponse({
@@ -73,5 +73,12 @@ export class UsersController {
     @Body() signinDto: SigninDto,
   ): Promise<LoginResponse> {
     return this.usersService.signin(signinDto);
+  }
+
+  @Post('signup/confirm-email')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiBearerAuth()
+  public emailConfirmation(@Req() req) {
+    return this.usersService.emailConfirmation(req.user?.id)
   }
 }

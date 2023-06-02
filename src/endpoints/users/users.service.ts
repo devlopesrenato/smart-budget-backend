@@ -6,45 +6,24 @@ import { BadRequestError } from 'src/common/errors/types/BadRequestError';
 import { ConflictError } from 'src/common/errors/types/ConflictError';
 import { NotFoundError } from 'src/common/errors/types/NotFoundError';
 import { UnauthorizedError } from 'src/common/errors/types/UnauthorizedError';
+import { EmailService } from 'src/services/email/email.service';
 import { Utils } from 'src/utils';
+import { validationCodeMessage } from '../../services/email/messages/validation-code.message';
 import { CreateUserDto } from './dto/create-user.dto';
 import { SigninDto } from './dto/signin.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserEntity } from './entities/user.entity';
 
+const moment = require('moment-timezone')
 const prisma = new PrismaClient();
 const saltRounds = 10;
-
+const emailService = new EmailService();
 @Injectable()
 export class UsersService {
   constructor(
     private readonly authService: AuthService,
     private readonly utils: Utils
   ) { }
-
-  async create(createUserDto: CreateUserDto) {
-    const user = await prisma.users.findUnique({ where: { email: createUserDto.email } });
-    if (user) {
-      throw new ConflictError(`this email already exists: ${createUserDto.email}`);
-    }
-    const hashedPassword = await bcrypt.hash(createUserDto.password, saltRounds);
-
-    const userCreated = await prisma.users.create({
-      data: {
-        ...createUserDto,
-        emailValidated: false,
-        password: hashedPassword,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      }
-    });
-
-    return {
-      ...userCreated,
-      createdAt: this.utils.getDateTimeZone(userCreated.createdAt),
-      updatedAt: this.utils.getDateTimeZone(userCreated.updatedAt)
-    }
-  }
 
   async findOne(id: number, userID: number) {
     if (!this.utils.isNotNumber(String(id))) {
@@ -137,6 +116,45 @@ export class UsersService {
 
   }
 
+  async signup(createUserDto: CreateUserDto) {
+    const user = await prisma.users.findUnique({ where: { email: createUserDto.email } });
+    if (user) {
+      throw new ConflictError(`this email already exists: ${createUserDto.email}`);
+    }
+    const hashedPassword = await bcrypt.hash(createUserDto.password, saltRounds);
+
+    const userCreated = await prisma.users.create({
+      data: {
+        ...createUserDto,
+        emailValidated: false,
+        password: hashedPassword,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+    });
+
+    const token = await this.authService.createAccessTokenWithTime(
+      userCreated.id,
+      '60min',
+    );
+
+    emailService.sendMail({
+      clientEmail: userCreated.email,
+      subject: 'BUDGET APP - Confirme seu email.',
+      message: validationCodeMessage(
+        createUserDto.name,
+        token
+      ),
+    })
+
+    return {
+      id: userCreated.id,
+      name: userCreated.name,
+      email: userCreated.email,
+      createdAt: this.utils.getDateTimeZone(userCreated.createdAt)
+    }
+  }
+
   public async signin(signinDto: SigninDto): Promise<UserLogin> {
     const user: UserEntity = await prisma.users.findUnique({ where: { email: signinDto.email } });
     if (!user) {
@@ -159,6 +177,35 @@ export class UsersService {
       jwtToken: jwtToken,
     };
   }
+
+  public async emailConfirmation(id: number) {
+    if (!this.utils.isNotNumber(String(id))) {
+      throw new BadRequestError('invalid token')
+    }
+    const user: UserEntity = await prisma.users.findUnique({ where: { id } });
+    if (!user) {
+      throw new UnauthorizedError('Invalid token');
+    }
+    if (user.emailValidated) {
+      throw new BadRequestError('email already confirmed')
+    }
+    await prisma.users.update({
+      where: {
+        id
+      },
+      data: {
+        emailValidated: true,
+        emailValidatedAt: moment.utc().format('YYYY-MM-DDTHH:mm:ssZ'),
+      }
+    });
+
+    return {
+      statusCode: 200,
+      message: 'email confirmed successfully'
+    }
+
+  }
+
 
   private async checkPassword(
     pass: string,

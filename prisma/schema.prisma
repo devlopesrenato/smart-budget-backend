@@ -16,9 +16,9 @@ model AccountsPayable {
   value         Float
   createdAt     DateTime? @default(now()) @db.Timestamptz(3)
   updatedAt     DateTime? @updatedAt @db.Timestamptz(3)
-  createdBy     Users     @relation(fields: [creatorUserId], references: [id])
+  createdBy     Users     @relation(fields: [creatorUserId], references: [id], onDelete: Cascade)
   creatorUserId Int
-  sheet         Sheets    @relation(fields: [sheetId], references: [id])
+  sheet         Sheets    @relation(fields: [sheetId], references: [id], onDelete: Cascade)
   sheetId       Int
 
   @@map("accounts-payable")
@@ -30,9 +30,9 @@ model AccountsReceivable {
   value         Float
   createdAt     DateTime? @default(now()) @db.Timestamptz(3)
   updatedAt     DateTime? @updatedAt @db.Timestamptz(3)
-  createdBy     Users     @relation(fields: [creatorUserId], references: [id])
+  createdBy     Users     @relation(fields: [creatorUserId], references: [id], onDelete: Cascade)
   creatorUserId Int
-  sheet         Sheets    @relation(fields: [sheetId], references: [id])
+  sheet         Sheets    @relation(fields: [sheetId], references: [id], onDelete: Cascade)
   sheetId       Int
 
   @@map("accounts-receivable")
@@ -43,7 +43,7 @@ model Sheets {
   description        String               @unique
   createdAt          DateTime?            @default(now()) @db.Timestamptz(3)
   creatorUserId      Int
-  createdBy          Users                @relation(fields: [creatorUserId], references: [id])
+  createdBy          Users                @relation(fields: [creatorUserId], references: [id], onDelete: Cascade)
   updatedAt          DateTime?            @updatedAt @db.Timestamptz(3)
   accountsPayable    AccountsPayable[]
   accountsReceivable AccountsReceivable[]

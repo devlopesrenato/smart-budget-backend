@@ -1,12 +1,14 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { AuthModule } from './auth/auth.module';
 import { AccountsPayableModule } from './endpoints/accounts-payable/accounts-payable.module';
 import { AccountsReceivableModule } from './endpoints/accounts-receivable/accounts-receivable.module';
-import { UsersModule } from './endpoints/users/users.module';
 import { SheetsModule } from './endpoints/sheets/sheets.module';
+import { UsersModule } from './endpoints/users/users.module';
+import { UsersService } from './endpoints/users/users.service';
 import { PrismaService } from './prisma.service';
-import { AuthModule } from './auth/auth.module';
+import { Utils } from './utils';
 
 @Module({
   imports: [
@@ -19,7 +21,9 @@ import { AuthModule } from './auth/auth.module';
   controllers: [AppController],
   providers: [
     AppService,
-    PrismaService
+    PrismaService,
+    UsersService,
+    Utils
   ],
 })
 export class AppModule { }

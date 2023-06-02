@@ -56,9 +56,10 @@ export class UsersService {
     })
 
     return {
-      ...userCreated,
-      createdAt: this.utils.getDateTimeZone(userCreated.createdAt),
-      updatedAt: this.utils.getDateTimeZone(userCreated.updatedAt)
+      id: userCreated.id,
+      name: userCreated.name,
+      email: userCreated.email,
+      createdAt: this.utils.getDateTimeZone(userCreated.createdAt)
     }
   }
 

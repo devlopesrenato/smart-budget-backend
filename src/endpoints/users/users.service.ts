@@ -6,7 +6,9 @@ import { BadRequestError } from 'src/common/errors/types/BadRequestError';
 import { ConflictError } from 'src/common/errors/types/ConflictError';
 import { NotFoundError } from 'src/common/errors/types/NotFoundError';
 import { UnauthorizedError } from 'src/common/errors/types/UnauthorizedError';
+import { EmailService } from 'src/services/email/email.service';
 import { Utils } from 'src/utils';
+import { validationCodeMessage } from '../../services/email/messages/validation-code.message';
 import { CreateUserDto } from './dto/create-user.dto';
 import { SigninDto } from './dto/signin.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -14,7 +16,7 @@ import { UserEntity } from './entities/user.entity';
 
 const prisma = new PrismaClient();
 const saltRounds = 10;
-
+const emailService = new EmailService();
 @Injectable()
 export class UsersService {
   constructor(
@@ -38,6 +40,20 @@ export class UsersService {
         updatedAt: new Date()
       }
     });
+
+    const token = await this.authService.createAccessTokenWithTime(
+      userCreated.id,
+      '60min',
+    );
+
+    emailService.sendMail({
+      clientEmail: userCreated.email,
+      subject: 'BUDGET APP - Confirme seu email.',
+      message: validationCodeMessage(
+        createUserDto.name,
+        token
+      ),
+    })
 
     return {
       ...userCreated,

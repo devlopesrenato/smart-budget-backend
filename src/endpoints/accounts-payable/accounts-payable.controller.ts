@@ -1,12 +1,12 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Req, UseGuards } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+import { ApiBadRequestResponse, ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiResponse, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
+import { ApiResponseGenerate } from 'src/@types/swagger/api-response-generate';
+import { AuthService } from 'src/auth/auth.service';
 import { AccountsPayableService } from './accounts-payable.service';
 import { CreateAccountsPayableDto } from './dto/create-accounts-payable.dto';
 import { UpdateAccountsPayableDto } from './dto/update-accounts-payable.dto';
-import { ApiTags, ApiResponse, ApiOperation, ApiParam, ApiBody, ApiSecurity, ApiBearerAuth, ApiUnauthorizedResponse, ApiBadRequestResponse } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
-import { AuthService } from 'src/auth/auth.service';
 import { AccountsPayableEntity } from './entities/accounts-payable.entity';
-import { ApiResponseGenerate } from 'src/@types/swagger/api-response-generate';
 
 @Controller('accounts-payable')
 @ApiTags('Contas a pagar')
@@ -33,8 +33,8 @@ export class AccountsPayableController {
   @ApiBadRequestResponse(ApiResponseGenerate(400, ["Token not sent.", "Bad Request"]))
   @ApiUnauthorizedResponse(ApiResponseGenerate(401, "Unauthorized"))
   @Get()
-  findAll() {
-    return this.accountsPayableService.findAll();
+  findAll(@Req() req) {
+    return this.accountsPayableService.findAll(req.user?.id);
   }
 
   @ApiOperation({ summary: 'Obter uma única conta a pagar por ID' })
@@ -43,8 +43,8 @@ export class AccountsPayableController {
   @ApiBadRequestResponse(ApiResponseGenerate(400, ["Token not sent.", "invalid id", "Bad Request"]))
   @ApiUnauthorizedResponse(ApiResponseGenerate(401, "Unauthorized"))
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.accountsPayableService.findOne(+id);
+  findOne(@Param('id') id: string, @Req() req) {
+    return this.accountsPayableService.findOne(+id, req.user?.id);
   }
 
   @ApiOperation({ summary: 'Atualizar uma conta a pagar existente por ID' })
@@ -65,7 +65,7 @@ export class AccountsPayableController {
   @ApiBadRequestResponse(ApiResponseGenerate(400, ["Token not sent.", "invalid id", "Bad Request"]))
   @ApiUnauthorizedResponse(ApiResponseGenerate(401, "Unauthorized"))
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.accountsPayableService.remove(+id);
+  remove(@Param('id') id: string, @Req() req) {
+    return this.accountsPayableService.remove(+id, req.user?.id);
   }
 }

@@ -1,49 +1,28 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
-import { UsersService } from './users.service';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
-import { ApiTags, ApiOperation, ApiResponse, ApiBadRequestResponse, ApiBearerAuth, ApiUnauthorizedResponse, ApiOkResponse, ApiCreatedResponse } from '@nestjs/swagger';
-import { SigninDto } from './dto/signin.dto';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Req, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { UserEntity } from './entities/user.entity';
+import { ApiBadRequestResponse, ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiResponse, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
 import { ApiResponseGenerate } from 'src/@types/swagger/api-response-generate';
+import { CreateUserDto } from './dto/create-user.dto';
+import { SigninDto } from './dto/signin.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { UserEntity } from './entities/user.entity';
+import { UsersService } from './users.service';
 
 @ApiTags('Usuários')
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) { }
 
-  @Post()
-  @ApiOperation({ summary: 'Criar novo usuário', description: 'Cria um novo usuário com as informações fornecidas.' })
-  @ApiCreatedResponse({ description: 'Usuário criado com sucesso.', type: UserEntity })
-  @ApiBadRequestResponse(ApiResponseGenerate(400, ["Token not sent.", "Bad Request"]))
-  @ApiUnauthorizedResponse(ApiResponseGenerate(401, "Unauthorized"))
-  @UseGuards(AuthGuard('jwt'))
-  @ApiBearerAuth()
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.usersService.create(createUserDto);
-  }
-
-  @Get()
-  @ApiOperation({ summary: 'Listar todos os usuários', description: 'Retorna uma lista de todos os usuários cadastrados.' })
-  @ApiOkResponse({ description: 'Lista de usuários retornada com sucesso.', type: [UserEntity] })
-  @ApiBadRequestResponse(ApiResponseGenerate(400, ["Token not sent.", "Bad Request"]))
-  @ApiUnauthorizedResponse(ApiResponseGenerate(401, "Unauthorized"))
-  @UseGuards(AuthGuard('jwt'))
-  @ApiBearerAuth()
-  findAll() {
-    return this.usersService.findAll();
-  }
-
   @Get(':id')
   @ApiOperation({ summary: 'Buscar usuário por ID', description: 'Retorna as informações do usuário com o ID fornecido.' })
   @ApiOkResponse({ description: 'Usuário encontrado com sucesso.', type: UserEntity })
   @ApiBadRequestResponse(ApiResponseGenerate(400, ["Token not sent.", "invalid id", "Bad Request"]))
   @ApiUnauthorizedResponse(ApiResponseGenerate(401, "Unauthorized"))
+  @ApiUnauthorizedResponse(ApiResponseGenerate(409, "this email already exists: example@example.com"))
   @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()
-  findOne(@Param('id') id: string) {
-    return this.usersService.findOne(+id);
+  findOne(@Param('id') id: string, @Req() req) {
+    return this.usersService.findOne(+id, req.user?.id);
   }
 
   @Patch(':id')
@@ -53,8 +32,8 @@ export class UsersController {
   @ApiUnauthorizedResponse(ApiResponseGenerate(401, "Unauthorized"))
   @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.usersService.update(+id, updateUserDto);
+  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto, @Req() req) {
+    return this.usersService.update(+id, updateUserDto, req.user?.id);
   }
 
   @Delete(':id')
@@ -64,12 +43,19 @@ export class UsersController {
   @ApiUnauthorizedResponse(ApiResponseGenerate(401, "Unauthorized"))
   @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()
-  remove(@Param('id') id: string) {
-    return this.usersService.remove(+id);
+  remove(@Param('id') id: string, @Req() req) {
+    return this.usersService.remove(+id, req.user?.id);
+  }
+
+  @Post('signup')
+  @ApiOperation({ summary: 'Criar novo usuário', description: 'Cria um novo usuário com as informações fornecidas.' })
+  @ApiCreatedResponse({ description: 'Usuário criado com sucesso.', type: UserEntity })
+  create(@Body() createUserDto: CreateUserDto) {
+    return this.usersService.signup(createUserDto);
   }
 
   @Post('signin')
-  @ApiOperation({ summary: 'Login do usuário', description: 'Retorna os dados do usuário e um token de acesso..' })
+  @ApiOperation({ summary: 'Login do usuário', description: 'Retorna os dados do usuário e um token de acesso.' })
   @ApiResponse({
     status: 200, description: 'Login efetuado com sucesso.',
     schema: {
@@ -82,9 +68,27 @@ export class UsersController {
   })
   @ApiBadRequestResponse(ApiResponseGenerate(400, ["E-mail inválido!", "Senha inválida!"]))
   @ApiUnauthorizedResponse(ApiResponseGenerate(401, "Invalid Credentials"))
+  @ApiUnauthorizedResponse(ApiResponseGenerate(401, "email not validated. validate the email before logging in"))
   public async signin(
     @Body() signinDto: SigninDto,
   ): Promise<LoginResponse> {
     return this.usersService.signin(signinDto);
+  }
+
+  @Post('signup/confirm-email')
+  @ApiOperation({ summary: 'Confirmação de email', description: 'Cofirma o email do usuário.' })
+  @ApiResponse({
+    status: 200, description: 'Email confirmado com sucesso.',
+    schema: {
+      example: {
+        statusCode: 200,
+        message: 'email confirmed successfully',        
+      },
+    },
+  })
+  @UseGuards(AuthGuard('jwt'))
+  @ApiBearerAuth()
+  public emailConfirmation(@Req() req) {
+    return this.usersService.emailConfirmation(req.user?.id)
   }
 }

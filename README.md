@@ -29,8 +29,8 @@ API de orçamento para gerenciar as despesas e receitas de um usuário.
 DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}/${POSTGRES_DATABASE}?schema=public
 
 # postgres
-POSTGRES_HOST=0.0.0.0:5432
-POSTGRES_USER=admin
+POSTGRES_HOST=postgresdb:5432
+POSTGRES_USER=postgres
 POSTGRES_PASSWORD=12345678
 POSTGRES_DATABASE=budgetdb
 TIMEZONE='America/Sao_Paulo'
@@ -44,8 +44,14 @@ JWT_SECRET="12345678"
 ENCRYPT_JWT_SECRET="87654321"
 JWT_EXPIRATION="7d"
 
-# api
-API_URL="http://127.0.0.1:3000"
+# URLS
+API_URL="http://backend:3000"
+FRONT_URL="http://frontend:3000"
+
+# email
+EMAIL_SERVICE='seu=provedor'
+EMAIL_USER='seu-email@exemplo.com'
+EMAIL_PASS='sua-senha'
 
 ```
 

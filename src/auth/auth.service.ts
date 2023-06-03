@@ -1,13 +1,13 @@
 import {
-    Injectable,
-    BadRequestException,
-    UnauthorizedException,
-  } from '@nestjs/common';
-  import { Request } from 'express';
-  import { sign } from 'jsonwebtoken';
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
+import { Request } from 'express';
+import { sign, verify } from 'jsonwebtoken';
 import { PrismaService } from 'src/prisma.service';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
-   
+
   
   @Injectable()
   export class AuthService {
@@ -47,6 +47,15 @@ import { JwtPayload } from './interfaces/jwt-payload.interface';
       const [, token] = authHeader.split(' ');
   
       return token;
+    }
+    
+    public async extractDataFromToken(token: string) {
+      try {
+        const decoded = verify(token, process.env.JWT_SECRET) as JwtPayload;
+        return decoded.userId; // ou qualquer outro dado que esteja incluído no token
+      } catch (error) {
+        throw new UnauthorizedException('Invalid token.');
+      }
     }
   
     public returnJwtExtractor(): (request: Request) => string {

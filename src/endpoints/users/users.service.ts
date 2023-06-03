@@ -1,20 +1,23 @@
 import { Injectable } from '@nestjs/common';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
-import * as bcrypt from 'bcryptjs';
 import { PrismaClient } from '@prisma/client';
-import { UserEntity } from './entities/user.entity';
+import * as bcrypt from 'bcryptjs';
 import { AuthService } from 'src/auth/auth.service';
-import { SigninDto } from './dto/signin.dto';
+import { BadRequestError } from 'src/common/errors/types/BadRequestError';
+import { ConflictError } from 'src/common/errors/types/ConflictError';
 import { NotFoundError } from 'src/common/errors/types/NotFoundError';
 import { UnauthorizedError } from 'src/common/errors/types/UnauthorizedError';
-import { ConflictError } from 'src/common/errors/types/ConflictError';
-import { BadRequestError } from 'src/common/errors/types/BadRequestError';
+import { EmailService } from 'src/services/email/email.service';
 import { Utils } from 'src/utils';
+import { validationCodeMessage } from '../../services/email/messages/validation-code.message';
+import { CreateUserDto } from './dto/create-user.dto';
+import { SigninDto } from './dto/signin.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { UserEntity } from './entities/user.entity';
 
+const moment = require('moment-timezone')
 const prisma = new PrismaClient();
 const saltRounds = 10;
-
+const emailService = new EmailService();
 @Injectable()
 export class UsersService {
   constructor(
@@ -22,40 +25,7 @@ export class UsersService {
     private readonly utils: Utils
   ) { }
 
-  async create(createUserDto: CreateUserDto) {
-    const user = await prisma.users.findUnique({ where: { email: createUserDto.email } });
-    if (user) {
-      throw new ConflictError(`this email already exists: ${createUserDto.email}`);
-    }
-    const hashedPassword = await bcrypt.hash(createUserDto.password, saltRounds);
-
-    const userCreated = await prisma.users.create({
-      data: {
-        ...createUserDto,
-        password: hashedPassword,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      }
-    });
-
-    return {
-      ...userCreated,
-      createdAt: this.utils.getDateTimeZone(userCreated.createdAt),
-      updatedAt: this.utils.getDateTimeZone(userCreated.updatedAt)
-    }
-  }
-
-  async findAll() {
-    const users = await prisma.users.findMany();
-
-    return users.map((item) => ({
-      ...item,
-      createdAt: this.utils.getDateTimeZone(item.createdAt),
-      updatedAt: this.utils.getDateTimeZone(item.updatedAt)
-    }))
-  }
-
-  async findOne(id: number) {
+  async findOne(id: number, userID: number) {
     if (!this.utils.isNotNumber(String(id))) {
       throw new BadRequestError('invalid id')
     }
@@ -63,6 +33,11 @@ export class UsersService {
     if (!user) {
       throw new NotFoundError(`not found userId: ${id}`);
     }
+
+    if (user.id !== userID) {
+      throw new UnauthorizedError('you don\'t have permission to access this user')
+    }
+
     return {
       ...user,
       createdAt: this.utils.getDateTimeZone(user.createdAt),
@@ -70,13 +45,17 @@ export class UsersService {
     }
   }
 
-  async update(id: number, updateUserDto: UpdateUserDto) {
+  async update(id: number, updateUserDto: UpdateUserDto, userID: number) {
     if (!this.utils.isNotNumber(String(id))) {
       throw new BadRequestError('invalid id')
     }
     const user = await prisma.users.findUnique({ where: { id } });
     if (!user) {
       throw new NotFoundError(`not found userId: ${id}`);
+    }
+
+    if (user.id !== userID) {
+      throw new UnauthorizedError('you don\'t have permission to access this user')
     }
 
     if (updateUserDto?.email) {
@@ -110,7 +89,7 @@ export class UsersService {
 
   }
 
-  async remove(id: number) {
+  async remove(id: number, userID: number) {
     if (!this.utils.isNotNumber(String(id))) {
       throw new BadRequestError('invalid id')
     }
@@ -118,6 +97,11 @@ export class UsersService {
     if (!user) {
       throw new NotFoundError(`not found userId: ${id}`);
     }
+
+    if (user.id !== userID) {
+      throw new UnauthorizedError('you don\'t have permission to access this user')
+    }
+
     const userDeleted = await prisma.users.delete({
       where: {
         id
@@ -132,6 +116,45 @@ export class UsersService {
 
   }
 
+  async signup(createUserDto: CreateUserDto) {
+    const user = await prisma.users.findUnique({ where: { email: createUserDto.email } });
+    if (user) {
+      throw new ConflictError(`this email already exists: ${createUserDto.email}`);
+    }
+    const hashedPassword = await bcrypt.hash(createUserDto.password, saltRounds);
+
+    const userCreated = await prisma.users.create({
+      data: {
+        ...createUserDto,
+        emailValidated: false,
+        password: hashedPassword,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+    });
+
+    const token = await this.authService.createAccessTokenWithTime(
+      userCreated.id,
+      '60min',
+    );
+
+    emailService.sendMail({
+      clientEmail: userCreated.email,
+      subject: 'BUDGET APP - Confirme seu email.',
+      message: validationCodeMessage(
+        createUserDto.name,
+        token
+      ),
+    })
+
+    return {
+      id: userCreated.id,
+      name: userCreated.name,
+      email: userCreated.email,
+      createdAt: this.utils.getDateTimeZone(userCreated.createdAt)
+    }
+  }
+
   public async signin(signinDto: SigninDto): Promise<UserLogin> {
     const user: UserEntity = await prisma.users.findUnique({ where: { email: signinDto.email } });
     if (!user) {
@@ -142,6 +165,11 @@ export class UsersService {
       throw new UnauthorizedError('Invalid Credentials');
     }
     const jwtToken = await this.authService.createAccessToken(user.id);
+
+    if (!user.emailValidated) {
+      throw new UnauthorizedError('email not validated. validate the email before logging in')
+    }
+
     return {
       id: user.id,
       name: user.name,
@@ -149,6 +177,35 @@ export class UsersService {
       jwtToken: jwtToken,
     };
   }
+
+  public async emailConfirmation(id: number) {
+    if (!this.utils.isNotNumber(String(id))) {
+      throw new BadRequestError('invalid token')
+    }
+    const user: UserEntity = await prisma.users.findUnique({ where: { id } });
+    if (!user) {
+      throw new UnauthorizedError('Invalid token');
+    }
+    if (user.emailValidated) {
+      throw new BadRequestError('email already confirmed')
+    }
+    await prisma.users.update({
+      where: {
+        id
+      },
+      data: {
+        emailValidated: true,
+        emailValidatedAt: moment.utc().format('YYYY-MM-DDTHH:mm:ssZ'),
+      }
+    });
+
+    return {
+      statusCode: 200,
+      message: 'email confirmed successfully'
+    }
+
+  }
+
 
   private async checkPassword(
     pass: string,

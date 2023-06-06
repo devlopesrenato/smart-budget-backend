@@ -8,10 +8,10 @@ import { ConflictInterceptor } from './common/errors/interceptors/conflict.inter
 import { DatabaseInterceptor } from './common/errors/interceptors/database.interceptor';
 import { BadRequestInterceptor } from './common/errors/interceptors/badrequest.interceptor';
 
-async function bootstrap() {
-  app.enableCors();
+async function bootstrap() {  
   const app = await NestFactory.create(AppModule);
-
+  app.enableCors();
+  
   app.useGlobalInterceptors(new ConflictInterceptor());
   app.useGlobalInterceptors(new BadRequestInterceptor());
   app.useGlobalInterceptors(new DatabaseInterceptor());

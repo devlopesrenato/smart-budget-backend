@@ -9,6 +9,7 @@ import { DatabaseInterceptor } from './common/errors/interceptors/database.inter
 import { BadRequestInterceptor } from './common/errors/interceptors/badrequest.interceptor';
 
 async function bootstrap() {
+  app.enableCors();
   const app = await NestFactory.create(AppModule);
 
   app.useGlobalInterceptors(new ConflictInterceptor());

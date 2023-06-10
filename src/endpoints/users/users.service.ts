@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 import { AuthService } from 'src/auth/auth.service';
@@ -8,8 +8,10 @@ import { NotFoundError } from 'src/common/errors/types/NotFoundError';
 import { UnauthorizedError } from 'src/common/errors/types/UnauthorizedError';
 import { EmailService } from 'src/services/email/email.service';
 import { Utils } from 'src/utils';
+import { recoverPasswordMessage } from '../../services/email/messages/recover-password.message';
 import { validationCodeMessage } from '../../services/email/messages/validation-code.message';
 import { CreateUserDto } from './dto/create-user.dto';
+import { RecoverPasswordDto } from './dto/recover.dto';
 import { SigninDto } from './dto/signin.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserEntity } from './entities/user.entity';
@@ -140,7 +142,7 @@ export class UsersService {
 
     emailService.sendMail({
       clientEmail: userCreated.email,
-      subject: 'BUDGET APP - Confirme seu email.',
+      subject: 'Smart Budget - Confirme seu email.',
       message: validationCodeMessage(
         createUserDto.name,
         token
@@ -206,6 +208,59 @@ export class UsersService {
 
   }
 
+  public async recoverPassword(recoverPasswordDto: RecoverPasswordDto) {
+    if (!recoverPasswordDto.email) {
+      throw new BadRequestError('email not sent')
+    }
+
+    const user = await prisma.users.findUnique({
+      where: {
+        email: recoverPasswordDto.email
+      }
+    })
+
+    if (!user) {
+      throw new BadRequestError('email not found')
+    }
+
+    if (user.recoverSentAt) {
+      const currentDate = moment(user.recoverSentAt);
+      const diffMinutes = moment().diff(currentDate, 'minutes');
+      if (diffMinutes <= 5) {
+        throw new BadRequestError('A password reset email has already been sent in less than 5 minutes.')
+      }
+    }
+
+    const token = await this.authService.createAccessTokenWithTime(
+      user.id,
+      '5min',
+    );
+
+    try {
+      await prisma.users.update({
+        where: {
+          id: user.id
+        },
+        data: {
+          recoverSentAt: this.utils.getDateTimeZone(new Date())
+        }
+      })
+      emailService.sendMail({
+        clientEmail: user.email,
+        subject: 'Smart Budget - Recuperação de senha.',
+        message: recoverPasswordMessage(
+          user.name,
+          user.email,
+          token
+        ),
+      })
+      return {
+        message: 'sent password recovery',
+      }
+    } catch (error) {
+      throw new InternalServerErrorException('internal error')
+    }
+  }
 
   private async checkPassword(
     pass: string,

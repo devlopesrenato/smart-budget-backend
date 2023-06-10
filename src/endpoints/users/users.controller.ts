@@ -3,6 +3,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { ApiBadRequestResponse, ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiResponse, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
 import { ApiResponseGenerate } from 'src/@types/swagger/api-response-generate';
 import { CreateUserDto } from './dto/create-user.dto';
+import { RecoverPasswordDto } from './dto/recover.dto';
 import { SigninDto } from './dto/signin.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserEntity } from './entities/user.entity';
@@ -82,7 +83,7 @@ export class UsersController {
     schema: {
       example: {
         statusCode: 200,
-        message: 'email confirmed successfully',        
+        message: 'email confirmed successfully',
       },
     },
   })
@@ -90,5 +91,22 @@ export class UsersController {
   @ApiBearerAuth()
   public emailConfirmation(@Req() req) {
     return this.usersService.emailConfirmation(req.user?.id)
+  }
+
+  @Post('recover')
+  @ApiOperation({ summary: 'Recupearção de senha', description: 'Envia um email para redefinição de senha do usuário.' })
+  @ApiResponse({
+    status: 200, description: 'Email de recuperação enviado.',
+    schema: {
+      example: {
+        statusCode: 200,
+        message: 'sent password recovery',
+      },
+    },
+  })
+  public async recoverPassword(
+    @Body() recoverPasswordDto: RecoverPasswordDto,
+  ) {
+    return this.usersService.recoverPassword(recoverPasswordDto)
   }
 }

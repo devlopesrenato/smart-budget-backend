@@ -13,7 +13,9 @@ import { validationCodeMessage } from '../../services/email/messages/validation-
 import { CreateUserDto } from './dto/create-user.dto';
 import { RecoverPasswordDto } from './dto/recover.dto';
 import { SigninDto } from './dto/signin.dto';
+import { UpdatePasswordDto } from './dto/update-password.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { VerifyDataDto } from './dto/verify-data-dto.dto';
 import { UserEntity } from './entities/user.entity';
 
 const moment = require('moment-timezone')
@@ -78,6 +80,43 @@ export class UsersService {
       },
       data: {
         ...updateUserDto,
+        password: hashedPassword,
+        updatedAt: new Date()
+      }
+    });
+
+    return {
+      ...userUpdated,
+      createdAt: this.utils.getDateTimeZone(userUpdated.createdAt),
+      updatedAt: this.utils.getDateTimeZone(userUpdated.updatedAt)
+    }
+
+  }
+
+  async updatePassword(updatePasswordDto: UpdatePasswordDto, userID: number) {
+    const user = await prisma.users.findUnique({ where: { id: userID } });
+    if (!user) {
+      throw new NotFoundError('not found user');
+    }
+
+    if (user.email !== updatePasswordDto.email) {
+      throw new BadRequestError('this email does not belong to this userToken');
+    }
+
+    const hashedPassword =
+      updatePasswordDto.password
+        ? await bcrypt.hash(updatePasswordDto.password, saltRounds)
+        : undefined;
+
+    if (!hashedPassword) {
+      throw new BadRequestError('password not sent');
+    }
+
+    const userUpdated = await prisma.users.update({
+      where: {
+        id: user.id
+      },
+      data: {
         password: hashedPassword,
         updatedAt: new Date()
       }
@@ -259,6 +298,51 @@ export class UsersService {
       }
     } catch (error) {
       throw new InternalServerErrorException('internal error')
+    }
+  }
+
+  public async verifyData(verifyDataDto: VerifyDataDto, userID: number) {
+    const user = await prisma.users.findUnique({
+      where: {
+        id: userID
+      }
+    })
+    if (!user) {
+      throw new BadRequestError('user not found');
+    }
+    if (user.email !== verifyDataDto.email) {
+      throw new BadRequestError('this email does not belong to this userToken');
+    }
+    return { message: 'successfully validated data' }
+  }
+
+  public async resendValidationEmail(email: string) {
+    const user = await prisma.users.findUnique({ where: { email } });
+
+    if (!user) {
+      throw new NotFoundError(`not found user by email: ${email}`);
+    }
+
+    try {
+
+      const token = await this.authService.createAccessTokenWithTime(
+        user.id,
+        '60min',
+      );
+
+      emailService.sendMail({
+        clientEmail: user.email,
+        subject: 'Smart Budget - Confirme seu email.',
+        message: validationCodeMessage(
+          user.name,
+          token
+        ),
+      })
+
+      return { message: 'email successfully sent' }
+
+    } catch (error) {
+      throw new InternalServerErrorException('internal server error')
     }
   }
 

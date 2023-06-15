@@ -23,18 +23,29 @@ export class SheetsService {
       throw new UnauthorizedError(`user token invalid`);
     }
 
-    const sheet = await prisma.sheets.findUnique({
+    const sheets = await prisma.sheets.findMany({
       where: {
-        description: createSheetDto.description
+        creatorUserId: user.id
       }
     });
 
-    if (sheet) {
+    const sheetTest = sheets.filter(({ description }) => {
+      description
+        .trim()
+        .toLocaleLowerCase() ===
+        createSheetDto.description
+          .trim()
+          .toLocaleLowerCase()
+    })
+
+    if (sheetTest) {
       throw new ConflictError(`this sheet already exists: ${createSheetDto.description}`);
     }
+
     const sheetCreated = await prisma.sheets.create({
       data: {
         ...createSheetDto,
+        description: createSheetDto.description.trim(),
         creatorUserId: user.id,
       }
 
@@ -120,7 +131,6 @@ export class SheetsService {
       throw new UnauthorizedError(`user token invalid`);
     }
 
-
     if (!this.utils.isNotNumber(String(id))) {
       throw new BadRequestError('invalid id')
     }
@@ -140,7 +150,8 @@ export class SheetsService {
         id
       },
       data: {
-        ...updateSheetDto
+        ...updateSheetDto,
+        description: updateSheetDto.description.trim(),
       }
     })
 

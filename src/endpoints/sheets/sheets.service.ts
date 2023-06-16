@@ -28,7 +28,7 @@ export class SheetsService {
     });
 
     const sheetTest = sheets.filter(({ description }) => {
-      description
+      return description
         .trim()
         .toLocaleLowerCase() ===
         createSheetDto.description

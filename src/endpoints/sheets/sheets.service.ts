@@ -12,7 +12,9 @@ import { UpdateSheetDto } from './dto/update-sheet.dto';
 const prisma = new PrismaClient();
 @Injectable()
 export class SheetsService {
-  constructor(private readonly utils: Utils) { }
+  constructor(
+    private readonly utils: Utils
+  ) { }
 
   async create(createSheetDto: CreateSheetDto, userID: number) {
     const user = await prisma.users.findUnique({ where: { id: userID } });
@@ -21,29 +23,18 @@ export class SheetsService {
       throw new UnauthorizedError(`user token invalid`);
     }
 
-    const sheets = await prisma.sheets.findMany({
+    const sheet = await prisma.sheets.findUnique({
       where: {
-        creatorUserId: user.id
+        description: createSheetDto.description
       }
     });
 
-    const sheetTest = sheets.filter(({ description }) => {
-      description
-        .trim()
-        .toLocaleLowerCase() ===
-        createSheetDto.description
-          .trim()
-          .toLocaleLowerCase()
-    })
-
-    if (sheetTest.length) {
+    if (sheet) {
       throw new ConflictError(`this sheet already exists: ${createSheetDto.description}`);
     }
-
     const sheetCreated = await prisma.sheets.create({
       data: {
         ...createSheetDto,
-        description: createSheetDto.description.trim(),
         creatorUserId: user.id,
       }
 
@@ -129,6 +120,7 @@ export class SheetsService {
       throw new UnauthorizedError(`user token invalid`);
     }
 
+
     if (!this.utils.isNotNumber(String(id))) {
       throw new BadRequestError('invalid id')
     }
@@ -148,8 +140,7 @@ export class SheetsService {
         id
       },
       data: {
-        ...updateSheetDto,
-        description: updateSheetDto.description.trim(),
+        ...updateSheetDto
       }
     })
 

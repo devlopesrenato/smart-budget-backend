@@ -12,7 +12,7 @@ export function validationCodeMessage(name: string, token: string): string {
               <tbody>
                 <tr>
                   <td style="border-bottom:1px solid #cccccc;padding:20px; font-size: 25px;">
-                    <strong>Smart App</strong>
+                    <strong>Budget App</strong>
                   </td>
                 </tr>
                 <tr>

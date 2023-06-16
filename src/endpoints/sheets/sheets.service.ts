@@ -12,9 +12,7 @@ import { UpdateSheetDto } from './dto/update-sheet.dto';
 const prisma = new PrismaClient();
 @Injectable()
 export class SheetsService {
-  constructor(
-    private readonly utils: Utils
-  ) { }
+  constructor(private readonly utils: Utils) { }
 
   async create(createSheetDto: CreateSheetDto, userID: number) {
     const user = await prisma.users.findUnique({ where: { id: userID } });
@@ -38,7 +36,7 @@ export class SheetsService {
           .toLocaleLowerCase()
     })
 
-    if (sheetTest) {
+    if (sheetTest.length) {
       throw new ConflictError(`this sheet already exists: ${createSheetDto.description}`);
     }
 

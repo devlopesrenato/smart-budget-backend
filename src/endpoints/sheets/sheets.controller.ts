@@ -25,6 +25,15 @@ export class SheetsController {
     return this.sheetsService.create(createSheetDto, req.user?.id);
   }
 
+  @Post(':sheetId')
+  @ApiOperation({ summary: 'Duplica uma nova folha' })
+  @ApiResponse({ status: 201, description: 'Folha duplicada com sucesso', type: SheetEntity })
+  @ApiBadRequestResponse(ApiResponseGenerate(400, ["Token not sent.", "Bad Request"]))
+  @ApiUnauthorizedResponse(ApiResponseGenerate(401, "Unauthorized"))
+  duplicate(@Param('sheetId') sheetId: string, @Req() req) {
+    return this.sheetsService.duplicate(+sheetId, req.user?.id);
+  }
+
   @Get()
   @ApiOperation({ summary: 'Obter uma lista de todas as folhas' })
   @ApiResponse({ status: 200, description: 'Folhas retornadas com sucesso', type: [SheetEntity] })

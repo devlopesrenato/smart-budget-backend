@@ -1,4 +1,4 @@
-# Budget API
+# Smart Budget API
 
 API de orçamento para gerenciar as despesas e receitas de um usuário.
 
@@ -83,4 +83,4 @@ A API utiliza o framework NestJS, que utiliza o padrão arquitetural MVC (Model-
 A API utiliza o Docker para facilitar o processo de instalação e configuração do ambiente de desenvolvimento. O arquivo Dockerfile define como a imagem da aplicação será construída. Além disso, a API utiliza o Docker Compose para orquestrar os contêineres da aplicação e do banco de dados. O arquivo docker-compose.yml define como os contêineres serão criados e configurados.
 
 # Conclusão
-A API Budget é uma aplicação RESTful que permite aos usuários gerenciar seus orçamentos. Ela utiliza TypeScript, NestJS, Prisma, Postgres e Docker, seguindo padrões de arquitetura e segurança para fornecer uma experiência de uso consistente e segura.
+A Smart Budget API é uma aplicação RESTful que permite aos usuários gerenciar seus orçamentos. Ela utiliza TypeScript, NestJS, Prisma, Postgres e Docker, seguindo padrões de arquitetura e segurança para fornecer uma experiência de uso consistente e segura.

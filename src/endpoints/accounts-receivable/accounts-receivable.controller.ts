@@ -24,6 +24,15 @@ export class AccountsReceivableController {
     return this.accountsReceivableService.create(createAccountsReceivableDto, req.user?.id);
   }
 
+  @Post(':accountReceivableId')
+  @ApiOperation({ summary: 'Duplica conta a receber' })
+  @ApiResponse({ status: 201, description: 'Conta a receber duplicada com sucesso', type: AccountsReceivableEntity })
+  @ApiBadRequestResponse(ApiResponseGenerate(400, ["Token not sent.", "Bad Request"]))
+  @ApiUnauthorizedResponse(ApiResponseGenerate(401, "Unauthorized"))
+  duplicate(@Param('accountReceivableId') accountReceivableId: string, @Req() req) {
+    return this.accountsReceivableService.duplicate(+accountReceivableId, req.user?.id);
+  }
+
   @Get()
   @ApiOperation({ summary: 'Obter uma lista de todas as contas a receber' })
   @ApiResponse({ status: 200, description: 'Contas a receber retornadas com sucesso', type: [AccountsReceivableEntity] })

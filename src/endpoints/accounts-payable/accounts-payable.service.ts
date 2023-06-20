@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import { BadRequestError } from 'src/common/errors/types/BadRequestError';
 import { ConflictError } from 'src/common/errors/types/ConflictError';
@@ -55,6 +55,63 @@ export class AccountsPayableService {
       ...accountPayableCreated,
       createdAt: this.utils.getDateTimeZone(accountPayableCreated.createdAt),
       updatedAt: this.utils.getDateTimeZone(accountPayableCreated.updatedAt)
+    }
+  }
+
+  async duplicate(id: number, userID: number) {
+    const user = await prisma.users.findUnique({ where: { id: userID } });
+
+    if (!user) {
+      throw new UnauthorizedError(`user token invalid`);
+    }
+
+    if (!this.utils.isNotNumber(String(id))) {
+      throw new BadRequestError('invalid id')
+    }
+
+    const accountsPayable = await prisma.accountsPayable.findUnique({
+      where: { id },
+    });
+
+    if (!accountsPayable) {
+      throw new NotFoundError(`not found accountsPayableId: ${id}`);
+    }
+
+    if (accountsPayable.creatorUserId !== userID) {
+      throw new UnauthorizedError('you don\'t have permission to duplique this account payable')
+    }
+
+    const newItemDescription = await this.generateDuplicateDescription(accountsPayable.description, user.id)
+    try {
+      const accountsPayableDuplicated = await prisma.accountsPayable.create({
+        data: {
+          description: newItemDescription,
+          value: accountsPayable.value,
+          creatorUserId: accountsPayable.creatorUserId,
+          sheetId: accountsPayable.sheetId,
+        }
+      })
+
+      return {
+        ...accountsPayableDuplicated,
+        createdAt: this.utils.getDateTimeZone(accountsPayableDuplicated.createdAt),
+        updatedAt: this.utils.getDateTimeZone(accountsPayableDuplicated.updatedAt)
+      }
+    } catch (error) {
+      const created = await prisma.accountsPayable.findFirst({
+        where: {
+          description: newItemDescription
+        }
+      })
+      if (created) {
+        await prisma.accountsPayable.delete({
+          where: {
+            id: created.id,
+          }
+        })
+      }
+      console.log(error)
+      throw new InternalServerErrorException()
     }
   }
 
@@ -209,6 +266,33 @@ export class AccountsPayableService {
       ...accountPayableDeleted,
       createdAt: this.utils.getDateTimeZone(accountPayableDeleted.createdAt),
       updatedAt: this.utils.getDateTimeZone(accountPayableDeleted.updatedAt)
+    }
+  }
+
+  async generateDuplicateDescription(originalDescription: string, userId: number) {
+    try {
+      let duplicateCount = 0
+      let newItemDescription = originalDescription
+      const userAccountPayable = await prisma.accountsPayable.findMany({
+        where: {
+          creatorUserId: userId
+        }
+      })
+
+      const isDescriptionDuplicate = (description: string) => {
+        return userAccountPayable.some(({ description: existingDescription }) => {
+          return existingDescription === description
+        })
+      }
+
+      while (isDescriptionDuplicate(newItemDescription)) {
+        duplicateCount++
+        newItemDescription = `${originalDescription} (Cópia ${duplicateCount})`
+      }
+
+      return newItemDescription
+    } catch (error) {
+      throw new InternalServerErrorException()
     }
   }
 }

@@ -28,6 +28,15 @@ export class AccountsPayableController {
     return this.accountsPayableService.create(createAccountsPayableDto, req.user?.id);
   }
 
+  @Post(':accountPayableId')
+  @ApiOperation({ summary: 'Duplica conta a pagar' })
+  @ApiResponse({ status: 201, description: 'Conta a pagar duplicada com sucesso', type: AccountsPayableEntity })
+  @ApiBadRequestResponse(ApiResponseGenerate(400, ["Token not sent.", "Bad Request"]))
+  @ApiUnauthorizedResponse(ApiResponseGenerate(401, "Unauthorized"))
+  duplicate(@Param('accountPayableId') accountPayableId: string, @Req() req) {
+    return this.accountsPayableService.duplicate(+accountPayableId, req.user?.id);
+  }
+
   @ApiOperation({ summary: 'Obter uma lista de todas as contas a pagar' })
   @ApiResponse({ status: 200, description: 'Retorna uma lista de contas a pagar.', type: [AccountsPayableEntity] })
   @ApiBadRequestResponse(ApiResponseGenerate(400, ["Token not sent.", "Bad Request"]))

@@ -26,7 +26,7 @@ export class SheetsController {
   }
 
   @Post(':sheetId')
-  @ApiOperation({ summary: 'Duplica uma nova folha' })
+  @ApiOperation({ summary: 'Duplica uma folha' })
   @ApiResponse({ status: 201, description: 'Folha duplicada com sucesso', type: SheetEntity })
   @ApiBadRequestResponse(ApiResponseGenerate(400, ["Token not sent.", "Bad Request"]))
   @ApiUnauthorizedResponse(ApiResponseGenerate(401, "Unauthorized"))

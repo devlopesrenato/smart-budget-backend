@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import { BadRequestError } from 'src/common/errors/types/BadRequestError';
 import { ConflictError } from 'src/common/errors/types/ConflictError';
@@ -56,6 +56,62 @@ export class AccountsReceivableService {
       ...accountReceivableCreated,
       createdAt: this.utils.getDateTimeZone(accountReceivableCreated.createdAt),
       updatedAt: this.utils.getDateTimeZone(accountReceivableCreated.updatedAt)
+    }
+  }
+
+  async duplicate(id: number, userID: number) {
+    const user = await prisma.users.findUnique({ where: { id: userID } });
+
+    if (!user) {
+      throw new UnauthorizedError(`user token invalid`);
+    }
+
+    if (!this.utils.isNotNumber(String(id))) {
+      throw new BadRequestError('invalid id')
+    }
+
+    const accountsReceivable = await prisma.accountsReceivable.findUnique({
+      where: { id },
+    });
+
+    if (!accountsReceivable) {
+      throw new NotFoundError(`not found accountsReceivableId: ${id}`);
+    }
+
+    if (accountsReceivable.creatorUserId !== userID) {
+      throw new UnauthorizedError('you don\'t have permission to duplique this account receivable')
+    }
+
+    const newItemDescription = await this.generateDuplicateDescription(accountsReceivable.description, user.id)
+    try {
+      const accountsReceivableDuplicated = await prisma.accountsReceivable.create({
+        data: {
+          description: newItemDescription,
+          value: accountsReceivable.value,
+          creatorUserId: accountsReceivable.creatorUserId,
+          sheetId: accountsReceivable.sheetId,
+        }
+      })
+
+      return {
+        ...accountsReceivableDuplicated,
+        createdAt: this.utils.getDateTimeZone(accountsReceivableDuplicated.createdAt),
+        updatedAt: this.utils.getDateTimeZone(accountsReceivableDuplicated.updatedAt)
+      }
+    } catch (error) {
+      const created = await prisma.accountsReceivable.findFirst({
+        where: {
+          description: newItemDescription
+        }
+      })
+      if (created) {
+        await prisma.accountsReceivable.delete({
+          where: {
+            id: created.id,
+          }
+        })
+      }
+      throw new InternalServerErrorException()
     }
   }
 
@@ -208,5 +264,32 @@ export class AccountsReceivableService {
       updatedAt: this.utils.getDateTimeZone(accountReceivableDeleted.updatedAt)
     }
 
+  }
+
+  async generateDuplicateDescription(originalDescription: string, userId: number) {
+    try {
+      let duplicateCount = 0
+      let newItemDescription = originalDescription
+      const userAccountReceivable = await prisma.accountsReceivable.findMany({
+        where: {
+          creatorUserId: userId
+        }
+      })
+
+      const isDescriptionDuplicate = (description: string) => {
+        return userAccountReceivable.some(({ description: existingDescription }) => {
+          return existingDescription === description
+        })
+      }
+
+      while (isDescriptionDuplicate(newItemDescription)) {
+        duplicateCount++
+        newItemDescription = `${originalDescription} (Cópia ${duplicateCount})`
+      }
+
+      return newItemDescription
+    } catch (error) {
+      throw new InternalServerErrorException()
+    }
   }
 }

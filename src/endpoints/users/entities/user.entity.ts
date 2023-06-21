@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Users } from '@prisma/client';
 
 export class UserEntity implements Users {
+
   @ApiProperty({ type: 'integer', description: 'Identificador único do usuário.' })
   id: number;
 
@@ -25,4 +26,7 @@ export class UserEntity implements Users {
 
   @ApiProperty({ type: 'string', format: 'date-time', description: 'Data de atualização do registro.' })
   updatedAt: Date;
+
+  @ApiProperty({ type: 'string', format: 'date-time', description: 'Data da ultima solicitação de redefinição da senha.' })
+  recoverSentAt: Date;
 }

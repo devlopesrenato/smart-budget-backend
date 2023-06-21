@@ -23,7 +23,7 @@ export class SheetsService {
       throw new UnauthorizedError(`user token invalid`);
     }
 
-    const sheet = await prisma.sheets.findUnique({
+    const sheets = await prisma.sheets.findMany({
       where: {
         description: createSheetDto.description
       }

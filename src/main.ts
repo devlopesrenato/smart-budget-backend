@@ -1,17 +1,19 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+
 import { ValidationPipe } from '@nestjs/common/pipes';
-import { UnauthorizedInterceptor } from './common/errors/interceptors/unauthorized.interceptor';
-import { NotFoundInterceptor } from './common/errors/interceptors/notFound.interceptor';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+
+import { BadRequestInterceptor } from './common/errors/interceptors/badrequest.interceptor';
 import { ConflictInterceptor } from './common/errors/interceptors/conflict.interceptor';
 import { DatabaseInterceptor } from './common/errors/interceptors/database.interceptor';
-import { BadRequestInterceptor } from './common/errors/interceptors/badrequest.interceptor';
+import { NotFoundInterceptor } from './common/errors/interceptors/notFound.interceptor';
+import { UnauthorizedInterceptor } from './common/errors/interceptors/unauthorized.interceptor';
 
-async function bootstrap() {  
+async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.enableCors();
-  
+
   app.useGlobalInterceptors(new ConflictInterceptor());
   app.useGlobalInterceptors(new BadRequestInterceptor());
   app.useGlobalInterceptors(new DatabaseInterceptor());
@@ -31,6 +33,6 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
 
-  await app.listen(3000);
+  await app.listen(3001);
 }
 bootstrap();

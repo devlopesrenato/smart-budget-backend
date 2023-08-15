@@ -133,6 +133,9 @@ export class AccountsReceivableService {
             description: true
           }
         }
+      },
+      orderBy: {
+        createdAt: 'desc'
       }
     });
 

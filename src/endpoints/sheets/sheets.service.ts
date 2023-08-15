@@ -66,6 +66,9 @@ export class SheetsService {
     const sheets = await prisma.sheets.findMany({
       where: {
         creatorUserId: user.id
+      },
+      orderBy: {
+        createdAt: 'desc'
       }
     });
 
@@ -95,8 +98,16 @@ export class SheetsService {
         id,
       },
       include: {
-        accountsPayable: true,
-        accountsReceivable: true
+        accountsPayable: {
+          orderBy: {
+            createdAt: 'desc'
+          }
+        },
+        accountsReceivable: {
+          orderBy: {
+            createdAt: 'desc'
+          }
+        },
       }
     });
 

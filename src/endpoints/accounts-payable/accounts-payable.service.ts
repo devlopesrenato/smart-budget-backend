@@ -133,6 +133,9 @@ export class AccountsPayableService {
             description: true
           }
         }
+      },
+      orderBy: {
+        createdAt: 'desc'
       }
     });
 

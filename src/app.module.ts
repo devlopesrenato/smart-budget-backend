@@ -8,6 +8,7 @@ import { SheetsModule } from './endpoints/sheets/sheets.module';
 import { UsersModule } from './endpoints/users/users.module';
 import { UsersService } from './endpoints/users/users.service';
 import { PrismaModule } from './prisma/prisma.module';
+import { EmailService } from './services/email/email.service';
 import { Utils } from './utils';
 
 @Module({
@@ -17,12 +18,13 @@ import { Utils } from './utils';
     UsersModule,
     SheetsModule,
     AuthModule,
-    PrismaModule
+    PrismaModule,    
   ],
   controllers: [AppController],
   providers: [
     AppService,
     UsersService,
+    EmailService,
     Utils
   ],
 })

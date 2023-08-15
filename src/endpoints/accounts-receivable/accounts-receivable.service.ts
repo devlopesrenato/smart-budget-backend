@@ -1,29 +1,29 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
 import { BadRequestError } from 'src/common/errors/types/BadRequestError';
 import { ConflictError } from 'src/common/errors/types/ConflictError';
 import { NotFoundError } from 'src/common/errors/types/NotFoundError';
 import { UnauthorizedError } from 'src/common/errors/types/UnauthorizedError';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { Utils } from 'src/utils';
 import { CreateAccountsReceivableDto } from './dto/create-accounts-receivable.dto';
 import { UpdateAccountsReceivableDto } from './dto/update-accounts-receivable.dto';
 
-const prisma = new PrismaClient();
 @Injectable()
 export class AccountsReceivableService {
   constructor(
+    private readonly prisma: PrismaService,
     private readonly utils: Utils
   ) { }
 
   async create(createAccountsReceivableDto: CreateAccountsReceivableDto, userId: number) {
 
-    const user = await prisma.users.findUnique({ where: { id: userId } });
+    const user = await this.prisma.users.findUnique({ where: { id: userId } });
 
     if (!user) {
       throw new UnauthorizedError(`user token invalid`);
     }
 
-    const sheet = await prisma.sheets.findUnique({ where: { id: createAccountsReceivableDto.sheetId } });
+    const sheet = await this.prisma.sheets.findUnique({ where: { id: createAccountsReceivableDto.sheetId } });
 
     if (!sheet) {
       throw new NotFoundError(`not found sheetId: ${createAccountsReceivableDto.sheetId}`);
@@ -33,7 +33,7 @@ export class AccountsReceivableService {
       throw new UnauthorizedError('you don\'t have permission to add this receivable in this sheet')
     }
 
-    const accountReceivable = await prisma.accountsReceivable.findFirst({
+    const accountReceivable = await this.prisma.accountsReceivable.findFirst({
       where: {
         description: createAccountsReceivableDto.description,
         sheetId: createAccountsReceivableDto.sheetId
@@ -44,7 +44,7 @@ export class AccountsReceivableService {
       throw new ConflictError(`account receivable already exists for this sheetId: ${createAccountsReceivableDto.sheetId}`)
     }
 
-    const accountReceivableCreated = await prisma.accountsReceivable.create({
+    const accountReceivableCreated = await this.prisma.accountsReceivable.create({
       data: {
         ...createAccountsReceivableDto,
         creatorUserId: user.id,
@@ -60,7 +60,7 @@ export class AccountsReceivableService {
   }
 
   async duplicate(id: number, userID: number) {
-    const user = await prisma.users.findUnique({ where: { id: userID } });
+    const user = await this.prisma.users.findUnique({ where: { id: userID } });
 
     if (!user) {
       throw new UnauthorizedError(`user token invalid`);
@@ -70,7 +70,7 @@ export class AccountsReceivableService {
       throw new BadRequestError('invalid id')
     }
 
-    const accountsReceivable = await prisma.accountsReceivable.findUnique({
+    const accountsReceivable = await this.prisma.accountsReceivable.findUnique({
       where: { id },
     });
 
@@ -84,7 +84,7 @@ export class AccountsReceivableService {
 
     const newItemDescription = await this.generateDuplicateDescription(accountsReceivable.description, user.id)
     try {
-      const accountsReceivableDuplicated = await prisma.accountsReceivable.create({
+      const accountsReceivableDuplicated = await this.prisma.accountsReceivable.create({
         data: {
           description: newItemDescription,
           value: accountsReceivable.value,
@@ -99,13 +99,13 @@ export class AccountsReceivableService {
         updatedAt: this.utils.getDateTimeZone(accountsReceivableDuplicated.updatedAt)
       }
     } catch (error) {
-      const created = await prisma.accountsReceivable.findFirst({
+      const created = await this.prisma.accountsReceivable.findFirst({
         where: {
           description: newItemDescription
         }
       })
       if (created) {
-        await prisma.accountsReceivable.delete({
+        await this.prisma.accountsReceivable.delete({
           where: {
             id: created.id,
           }
@@ -116,7 +116,7 @@ export class AccountsReceivableService {
   }
 
   async findAll(userId: number) {
-    const accountsReceivable = await prisma.accountsReceivable.findMany({
+    const accountsReceivable = await this.prisma.accountsReceivable.findMany({
       where: {
         creatorUserId: userId
       },
@@ -150,7 +150,7 @@ export class AccountsReceivableService {
     if (!this.utils.isNotNumber(String(id))) {
       throw new BadRequestError('invalid id')
     }
-    const accountReceivable = await prisma.accountsReceivable.findUnique({
+    const accountReceivable = await this.prisma.accountsReceivable.findUnique({
       where: {
         id
       },
@@ -190,14 +190,14 @@ export class AccountsReceivableService {
       throw new BadRequestError('invalid id')
     }
 
-    const user = await prisma.users.findUnique({ where: { id: Number(userIdUpdate) } });
+    const user = await this.prisma.users.findUnique({ where: { id: Number(userIdUpdate) } });
 
     if (!user) {
       throw new UnauthorizedError(`user token invalid`);
     }
 
     if (updateAccountsReceivableDto.sheetId) {
-      const sheet = await prisma.sheets.findUnique({
+      const sheet = await this.prisma.sheets.findUnique({
         where: {
           id: updateAccountsReceivableDto.sheetId
         }
@@ -213,7 +213,7 @@ export class AccountsReceivableService {
       return sheet
     }
 
-    const accountReceivable = await prisma.accountsReceivable.findUnique({
+    const accountReceivable = await this.prisma.accountsReceivable.findUnique({
       where: {
         id
       },
@@ -223,7 +223,7 @@ export class AccountsReceivableService {
       throw new NotFoundError(`not found accountReceivableId: ${id}`);
     }
 
-    const accountReceivableUpdated = await prisma.accountsReceivable.update({
+    const accountReceivableUpdated = await this.prisma.accountsReceivable.update({
       where: {
         id
       },
@@ -241,7 +241,7 @@ export class AccountsReceivableService {
     if (!this.utils.isNotNumber(String(id))) {
       throw new BadRequestError('invalid id')
     }
-    const accountReceivable = await prisma.accountsReceivable.findUnique({
+    const accountReceivable = await this.prisma.accountsReceivable.findUnique({
       where: {
         id
       },
@@ -255,7 +255,7 @@ export class AccountsReceivableService {
       throw new UnauthorizedError('you don\'t have permission to delete this account receivable')
     }
 
-    const accountReceivableDeleted = await prisma.accountsReceivable.delete({
+    const accountReceivableDeleted = await this.prisma.accountsReceivable.delete({
       where: {
         id
       }
@@ -273,7 +273,7 @@ export class AccountsReceivableService {
     try {
       let duplicateCount = 0
       let newItemDescription = originalDescription
-      const userAccountReceivable = await prisma.accountsReceivable.findMany({
+      const userAccountReceivable = await this.prisma.accountsReceivable.findMany({
         where: {
           creatorUserId: userId
         }

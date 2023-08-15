@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { Request } from 'express';
 import { sign, verify } from 'jsonwebtoken';
-import { PrismaService } from 'src/prisma.service';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
 
 @Injectable()

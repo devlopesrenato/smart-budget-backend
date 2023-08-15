@@ -24,7 +24,7 @@ export class AppController {
   @Get('/account/confirm')
   @ApiOperation({ summary: 'Confirmação do email', description: 'Rota para teste de confirmação do email' })
   @ApiResponse({ status: 200, description: 'email confirmed successfully' })
-  async confrim(@Query('token') token: string) {
+  async confirm(@Query('token') token: string) {
     try {
       const userId = await this.authService.extractDataFromToken(token);
       return this.userService.emailConfirmation(userId)

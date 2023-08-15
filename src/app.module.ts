@@ -7,7 +7,8 @@ import { AccountsReceivableModule } from './endpoints/accounts-receivable/accoun
 import { SheetsModule } from './endpoints/sheets/sheets.module';
 import { UsersModule } from './endpoints/users/users.module';
 import { UsersService } from './endpoints/users/users.service';
-import { PrismaService } from './prisma.service';
+import { PrismaModule } from './prisma/prisma.module';
+import { EmailService } from './services/email/email.service';
 import { Utils } from './utils';
 
 @Module({
@@ -16,13 +17,14 @@ import { Utils } from './utils';
     AccountsReceivableModule,
     UsersModule,
     SheetsModule,
-    AuthModule
+    AuthModule,
+    PrismaModule,    
   ],
   controllers: [AppController],
   providers: [
     AppService,
-    PrismaService,
     UsersService,
+    EmailService,
     Utils
   ],
 })

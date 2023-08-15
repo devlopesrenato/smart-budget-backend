@@ -1,6 +1,8 @@
+import { Injectable } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
 import { SendMailDto } from './dto/send-mail.dto';
 
+@Injectable()
 export class EmailService {
     async sendMail(sendMailDto: SendMailDto): Promise<EmailResponse> {
         let transporter = await nodemailer.createTransport({
@@ -24,6 +26,7 @@ export class EmailService {
                 return { sent: true, info: responseService };
             }
         } catch (error) {
+            console.log(error)
             return { sent: false, info: error };
         }
     }

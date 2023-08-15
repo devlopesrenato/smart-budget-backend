@@ -1,29 +1,29 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
 import { BadRequestError } from 'src/common/errors/types/BadRequestError';
 import { ConflictError } from 'src/common/errors/types/ConflictError';
 import { NotFoundError } from 'src/common/errors/types/NotFoundError';
 import { UnauthorizedError } from 'src/common/errors/types/UnauthorizedError';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { Utils } from 'src/utils';
 import { CreateAccountsPayableDto } from './dto/create-accounts-payable.dto';
 import { UpdateAccountsPayableDto } from './dto/update-accounts-payable.dto';
 
-const prisma = new PrismaClient();
 @Injectable()
 export class AccountsPayableService {
   constructor(
+    private readonly prisma: PrismaService,
     private readonly utils: Utils
   ) { }
 
   async create(createAccountsPayableDto: CreateAccountsPayableDto, userId: number) {
 
-    const user = await prisma.users.findUnique({ where: { id: userId } });
+    const user = await this.prisma.users.findUnique({ where: { id: userId } });
 
     if (!user) {
       throw new UnauthorizedError(`user token invalid`);
     }
 
-    const sheet = await prisma.sheets.findUnique({ where: { id: createAccountsPayableDto.sheetId } });
+    const sheet = await this.prisma.sheets.findUnique({ where: { id: createAccountsPayableDto.sheetId } });
 
     if (!sheet) {
       throw new NotFoundError(`not found sheetId: ${createAccountsPayableDto.sheetId}`);
@@ -33,7 +33,7 @@ export class AccountsPayableService {
       throw new UnauthorizedError('you don\'t have permission to add this payable in this sheet')
     }
 
-    const accountPayable = await prisma.accountsPayable.findFirst({
+    const accountPayable = await this.prisma.accountsPayable.findFirst({
       where: {
         description: createAccountsPayableDto.description,
         sheetId: createAccountsPayableDto.sheetId
@@ -44,7 +44,7 @@ export class AccountsPayableService {
       throw new ConflictError(`account payable already exists for this sheetId: ${createAccountsPayableDto.sheetId}`)
     }
 
-    const accountPayableCreated = await prisma.accountsPayable.create({
+    const accountPayableCreated = await this.prisma.accountsPayable.create({
       data: {
         ...createAccountsPayableDto,
         creatorUserId: userId
@@ -59,7 +59,7 @@ export class AccountsPayableService {
   }
 
   async duplicate(id: number, userID: number) {
-    const user = await prisma.users.findUnique({ where: { id: userID } });
+    const user = await this.prisma.users.findUnique({ where: { id: userID } });
 
     if (!user) {
       throw new UnauthorizedError(`user token invalid`);
@@ -69,7 +69,7 @@ export class AccountsPayableService {
       throw new BadRequestError('invalid id')
     }
 
-    const accountsPayable = await prisma.accountsPayable.findUnique({
+    const accountsPayable = await this.prisma.accountsPayable.findUnique({
       where: { id },
     });
 
@@ -83,7 +83,7 @@ export class AccountsPayableService {
 
     const newItemDescription = await this.generateDuplicateDescription(accountsPayable.description, user.id)
     try {
-      const accountsPayableDuplicated = await prisma.accountsPayable.create({
+      const accountsPayableDuplicated = await this.prisma.accountsPayable.create({
         data: {
           description: newItemDescription,
           value: accountsPayable.value,
@@ -98,13 +98,13 @@ export class AccountsPayableService {
         updatedAt: this.utils.getDateTimeZone(accountsPayableDuplicated.updatedAt)
       }
     } catch (error) {
-      const created = await prisma.accountsPayable.findFirst({
+      const created = await this.prisma.accountsPayable.findFirst({
         where: {
           description: newItemDescription
         }
       })
       if (created) {
-        await prisma.accountsPayable.delete({
+        await this.prisma.accountsPayable.delete({
           where: {
             id: created.id,
           }
@@ -116,7 +116,7 @@ export class AccountsPayableService {
   }
 
   async findAll(userId: number) {
-    const accountsPayable = await prisma.accountsPayable.findMany({
+    const accountsPayable = await this.prisma.accountsPayable.findMany({
       where: {
         creatorUserId: userId
       },
@@ -133,6 +133,9 @@ export class AccountsPayableService {
             description: true
           }
         }
+      },
+      orderBy: {
+        createdAt: 'desc'
       }
     });
 
@@ -147,7 +150,7 @@ export class AccountsPayableService {
     if (!this.utils.isNotNumber(String(id))) {
       throw new BadRequestError('invalid id')
     }
-    const accountPayable = await prisma.accountsPayable.findUnique({
+    const accountPayable = await this.prisma.accountsPayable.findUnique({
       where: {
         id
       },
@@ -187,14 +190,14 @@ export class AccountsPayableService {
       throw new BadRequestError('invalid id')
     }
 
-    const user = await prisma.users.findUnique({ where: { id: Number(userIdUpdate) } });
+    const user = await this.prisma.users.findUnique({ where: { id: Number(userIdUpdate) } });
 
     if (!user) {
       throw new UnauthorizedError(`user token invalid`);
     }
 
     if (updateAccountsPayableDto.sheetId) {
-      const sheet = await prisma.sheets.findUnique({
+      const sheet = await this.prisma.sheets.findUnique({
         where: {
           id: updateAccountsPayableDto.sheetId
         }
@@ -210,7 +213,7 @@ export class AccountsPayableService {
       return sheet
     }
 
-    const accountPayable = await prisma.accountsPayable.findUnique({
+    const accountPayable = await this.prisma.accountsPayable.findUnique({
       where: {
         id
       },
@@ -224,7 +227,7 @@ export class AccountsPayableService {
       throw new UnauthorizedError('you don\'t have permission to modify this account payable')
     }
 
-    const accountPayableUpdated = await prisma.accountsPayable.update({
+    const accountPayableUpdated = await this.prisma.accountsPayable.update({
       where: {
         id
       },
@@ -242,7 +245,7 @@ export class AccountsPayableService {
     if (!this.utils.isNotNumber(String(id))) {
       throw new BadRequestError('invalid id')
     }
-    const accountPayable = await prisma.accountsPayable.findUnique({
+    const accountPayable = await this.prisma.accountsPayable.findUnique({
       where: {
         id
       },
@@ -256,7 +259,7 @@ export class AccountsPayableService {
       throw new UnauthorizedError('you don\'t have permission to delete this account payable')
     }
 
-    const accountPayableDeleted = await prisma.accountsPayable.delete({
+    const accountPayableDeleted = await this.prisma.accountsPayable.delete({
       where: {
         id
       }
@@ -273,7 +276,7 @@ export class AccountsPayableService {
     try {
       let duplicateCount = 0
       let newItemDescription = originalDescription
-      const userAccountPayable = await prisma.accountsPayable.findMany({
+      const userAccountPayable = await this.prisma.accountsPayable.findMany({
         where: {
           creatorUserId: userId
         }

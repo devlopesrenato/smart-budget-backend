@@ -7,6 +7,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { BadRequestInterceptor } from './common/errors/interceptors/badrequest.interceptor';
 import { ConflictInterceptor } from './common/errors/interceptors/conflict.interceptor';
 import { DatabaseInterceptor } from './common/errors/interceptors/database.interceptor';
+import { InternalServerErrorInterceptor } from './common/errors/interceptors/internalservererror.interceptor';
 import { NotFoundInterceptor } from './common/errors/interceptors/notFound.interceptor';
 import { UnauthorizedInterceptor } from './common/errors/interceptors/unauthorized.interceptor';
 
@@ -19,6 +20,7 @@ async function bootstrap() {
   app.useGlobalInterceptors(new DatabaseInterceptor());
   app.useGlobalInterceptors(new UnauthorizedInterceptor());
   app.useGlobalInterceptors(new NotFoundInterceptor());
+  app.useGlobalInterceptors(new InternalServerErrorInterceptor());
   app.useGlobalPipes(new ValidationPipe({
     whitelist: true,
     forbidNonWhitelisted: true,

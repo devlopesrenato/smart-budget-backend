@@ -1,9 +1,8 @@
 import { Module } from '@nestjs/common';
-import { AccountsPayableService } from './accounts-payable.service';
-import { AccountsPayableController } from './accounts-payable.controller';
-import { Utils } from 'src/utils';
 import { AuthService } from 'src/auth/auth.service';
-import { PrismaService } from 'src/prisma.service';
+import { Utils } from 'src/utils';
+import { AccountsPayableController } from './accounts-payable.controller';
+import { AccountsPayableService } from './accounts-payable.service';
 
 @Module({
   controllers: [AccountsPayableController],
@@ -11,7 +10,6 @@ import { PrismaService } from 'src/prisma.service';
     AccountsPayableService,
     Utils,
     AuthService,
-    PrismaService
   ]
 })
 export class AccountsPayableModule { }

@@ -1,9 +1,10 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 import { AuthService } from 'src/auth/auth.service';
 import { BadRequestError } from 'src/common/errors/types/BadRequestError';
 import { ConflictError } from 'src/common/errors/types/ConflictError';
+import { InternalServerError } from 'src/common/errors/types/InternalServerError';
 import { NotFoundError } from 'src/common/errors/types/NotFoundError';
 import { UnauthorizedError } from 'src/common/errors/types/UnauthorizedError';
 import { EmailService } from 'src/services/email/email.service';
@@ -297,7 +298,7 @@ export class UsersService {
         message: 'sent password recovery',
       }
     } catch (error) {
-      throw new InternalServerErrorException('internal error')
+      throw new InternalServerError('internal error')
     }
   }
 
@@ -330,19 +331,23 @@ export class UsersService {
         '60min',
       );
 
-      emailService.sendMail({
+      await emailService.sendMail({
         clientEmail: user.email,
         subject: 'Smart Budget - Confirme seu email.',
         message: validationCodeMessage(
           user.name,
           token
         ),
+      }).then(result => {     
+        if (!result?.sent) {          
+          throw new InternalServerError('error sending email')
+        }
       })
 
       return { message: 'email successfully sent' }
 
     } catch (error) {
-      throw new InternalServerErrorException('internal server error')
+      throw new InternalServerError('Internal Server Error - Error sending e-mail')
     }
   }
 

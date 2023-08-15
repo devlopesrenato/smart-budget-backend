@@ -24,6 +24,7 @@ export class EmailService {
                 return { sent: true, info: responseService };
             }
         } catch (error) {
+            console.log(error)
             return { sent: false, info: error };
         }
     }

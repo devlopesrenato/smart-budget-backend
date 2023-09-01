@@ -1,7 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Req, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiBadRequestResponse, ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiResponse, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
-import { ApiResponseGenerate } from 'src/@types/swagger/api-response-generate';
+import { ApiResponseGenerate } from '@src/@types/swagger/api-response-generate';
 import { CreateUserDto } from './dto/create-user.dto';
 import { RecoverPasswordDto } from './dto/recover.dto';
 import { ResendValidationEmailDto } from './dto/resend-email-validation.dto';
@@ -47,7 +47,7 @@ export class UsersController {
   @ApiUnauthorizedResponse(ApiResponseGenerate(401, "Unauthorized"))
   @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()
-  updatePassword(@Param('id') id: string, @Body() updatePasswordDto: UpdatePasswordDto, @Req() req) {
+  updatePassword(@Body() updatePasswordDto: UpdatePasswordDto, @Req() req) {
     return this.usersService.updatePassword(updatePasswordDto, req.user?.id);
   }
 

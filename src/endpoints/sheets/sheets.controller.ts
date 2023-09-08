@@ -2,7 +2,7 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Req, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiBadRequestResponse, ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiResponse, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
-import { ApiResponseGenerate } from 'src/@types/swagger/api-response-generate';
+import { ApiResponseGenerate } from '@src/@types/swagger/api-response-generate';
 import { CreateSheetDto } from './dto/create-sheet.dto';
 import { UpdateSheetDto } from './dto/update-sheet.dto';
 import { SheetEntity } from './entities/sheet.entity';

@@ -1,10 +1,10 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { BadRequestError } from 'src/common/errors/types/BadRequestError';
-import { ConflictError } from 'src/common/errors/types/ConflictError';
-import { NotFoundError } from 'src/common/errors/types/NotFoundError';
-import { UnauthorizedError } from 'src/common/errors/types/UnauthorizedError';
-import { PrismaService } from 'src/prisma/prisma.service';
-import { Utils } from 'src/utils';
+import { BadRequestError } from '@src/common/errors/types/BadRequestError';
+import { ConflictError } from '@src/common/errors/types/ConflictError';
+import { NotFoundError } from '@src/common/errors/types/NotFoundError';
+import { UnauthorizedError } from '@src/common/errors/types/UnauthorizedError';
+import { PrismaService } from '@src/prisma/prisma.service';
+import { Utils } from '@src/utils';
 import sumProp from '../../utils/sumProp';
 import { CreateSheetDto } from './dto/create-sheet.dto';
 import { UpdateSheetDto } from './dto/update-sheet.dto';
@@ -225,7 +225,6 @@ export class SheetsService {
           creatorUserId: sheet.creatorUserId,
         }
       })
-      console.log(sheetDuplicated)
       const accPayable = sheet.accountsPayable.map((item) => {
         return {
           description: item.description,
@@ -269,6 +268,7 @@ export class SheetsService {
           }
         })
       }
+      console.log(error)
       throw new InternalServerErrorException()
     }
   }

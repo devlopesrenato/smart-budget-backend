@@ -1,14 +1,14 @@
 import { Injectable } from '@nestjs/common';
+import { AuthService } from '@src/auth/auth.service';
+import { BadRequestError } from '@src/common/errors/types/BadRequestError';
+import { ConflictError } from '@src/common/errors/types/ConflictError';
+import { InternalServerError } from '@src/common/errors/types/InternalServerError';
+import { NotFoundError } from '@src/common/errors/types/NotFoundError';
+import { UnauthorizedError } from '@src/common/errors/types/UnauthorizedError';
+import { PrismaService } from '@src/prisma/prisma.service';
+import { EmailService } from '@src/services/email/email.service';
+import { Utils } from '@src/utils';
 import * as bcrypt from 'bcryptjs';
-import { AuthService } from 'src/auth/auth.service';
-import { BadRequestError } from 'src/common/errors/types/BadRequestError';
-import { ConflictError } from 'src/common/errors/types/ConflictError';
-import { InternalServerError } from 'src/common/errors/types/InternalServerError';
-import { NotFoundError } from 'src/common/errors/types/NotFoundError';
-import { UnauthorizedError } from 'src/common/errors/types/UnauthorizedError';
-import { PrismaService } from 'src/prisma/prisma.service';
-import { EmailService } from 'src/services/email/email.service';
-import { Utils } from 'src/utils';
 import { recoverPasswordMessage } from '../../services/email/messages/recover-password.message';
 import { validationCodeMessage } from '../../services/email/messages/validation-code.message';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -222,7 +222,7 @@ export class UsersService {
 
   public async emailConfirmation(id: number) {
     if (!this.utils.isNotNumber(String(id))) {
-      throw new BadRequestError('invalid token')
+      throw new BadRequestError('Invalid token')
     }
     const user: UserEntity = await this.prisma.users.findUnique({ where: { id } });
     if (!user) {
@@ -338,8 +338,8 @@ export class UsersService {
           user.name,
           token
         ),
-      }).then(result => {     
-        if (!result?.sent) {          
+      }).then(result => {
+        if (!result?.sent) {
           throw new InternalServerError('error sending email')
         }
       })
